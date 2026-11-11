@@ -1,0 +1,37 @@
+# Enhancements
+
+Requests in the order received. `- [x]` once shipped, with the version.
+
+- [x] 2026-11-11 (all platforms): Study Contacts Optimizer for Android and list everything it does in `specs.md`. Done in 0.1.
+- [ ] 2026-11-11: The app for macOS first, then Linux and Windows, built on Rust.
+  - [ ] Mac (0.1: opens vCard and CSV files, lists and searches contacts, finds and deletes duplicates, exports, contact editor, Toolbox; the rest is in `pending.md`)
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-11 (all platforms): Read and write every known contacts file format. vCard 2.1/3.0/4.0 and CSV in 0.1; the others are in `pending.md`.
+- [ ] 2026-11-11 (all platforms): Connect to Outlook, Google and iCloud accounts to scan, import, export and edit their contacts, alongside local files.
+- [ ] 2026-11-11: An About page with version and info, like Herb's Terminal's.
+  - [x] Mac (0.1)
+  - [ ] Linux
+  - [ ] Windows
+- [x] 2026-11-11 (Mac; Linux and Windows come with their ports): Contact editor and Toolbox. Done in 0.1.
+- [x] 2026-11-11 (all platforms): Follow the reference app more closely in how duplicates, similar contacts, invalid contacts, names and capitalization are judged. Done in 0.1.
+- [x] 2026-11-11 (Mac; Linux and Windows come with their ports): Save back to the file with a backup, Restore, and the Optimization Wizard with its summary. Done in 0.1.
+- [ ] 2026-11-11 (Mac first): Accounts. iCloud and other CardDAV servers with the locked store for sign-ins are in 0.1 (tested against a pretend server, not yet a real account); Google and Microsoft are open.
+- [ ] 2026-11-11 (all platforms): Edit or delete a contact at any stage of the Wizard or Toolbox. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Import several contact files and work on them together. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Tick boxes left of the name in the list, with tick/untick all; export the ticked contacts to a new file. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Merge several contact files into one. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Convert contact files into other formats. (Mac: vCard 3.0/4.0, Google and Outlook CSV, Excel, LDIF, jCard and xCard in 0.1; the rest are listed in `pending.md`)
+- [ ] 2026-11-11 (all platforms): Profile pictures on contacts. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Light and dark themes, looking like macOS 27's Finder where possible. (Mac: switch and Finder look done in 0.1 (details still open in `pending.md`))
+- [ ] 2026-11-11 (all platforms): A country code on every contact: pick it by country from a dropdown, or type it. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Edit common fields in bulk for the ticked contacts. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): ⌘A / Ctrl+A selects all. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Common keyboard shortcuts for moving around and editing. (Mac: list keys in 0.1; undo is open)
+- [ ] 2026-11-11 (all platforms): Choose which of the similar contacts to merge into. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Go through the wizard or the list one contact at a time. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Wizard/Toolbox: show every number without a country code and pick the code (country and code dropdown, or typed) contact by contact. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Sort contacts by name, last name, phone and e-mail. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Select several address books: ⌘A / Ctrl+A, click and drag, ⌘-click, Shift-click a range. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): Keep the app's own layout and shapes (toolbar across the top, plain sidebar, rounded-rectangle buttons); take only the colours from Finder, not its design. (Mac: done in 0.1)
+- [ ] 2026-11-11 (all platforms): The toolbar buttons are the same, in the same places, on every platform; the Main Menu button does not move. (Mac: done in 0.1 (the Mac now has its ordinary title bar, so nothing has to make room for its window buttons))

@@ -1,0 +1,9 @@
+.investigation/
+target/
+dist/
+.DS_Store
+version.txt
+.build/
+linux/build/
+linux/.flatpak-builder/
+.hosts

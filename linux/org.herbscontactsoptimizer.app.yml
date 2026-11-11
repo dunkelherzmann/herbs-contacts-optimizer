@@ -1,0 +1,40 @@
+# Herb's Contacts Optimizer for Linux as a Flatpak. Build it on Linux with linux/scripts/build.sh [--install].
+id: org.herbscontactsoptimizer.app
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: herbs-contacts-optimizer
+finish-args:
+  - --share=ipc
+  # Accounts talk to their servers.
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # Contact files are opened, saved back in place and exported wherever the user keeps them.
+  - --filesystem=home
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  # Local builds fetch the crates with cargo (a Flathub build would vendor them).
+  build-args:
+    - --share=network
+  env:
+    CARGO_HOME: /run/build/herbs-contacts-optimizer/cargo
+modules:
+  - name: herbs-contacts-optimizer
+    buildsystem: simple
+    build-commands:
+      - sh linux/install.sh /app
+    sources:
+      - type: dir
+        path: ..
+        skip:
+          - target
+          - linux/.flatpak-builder
+          - linux/build
+          - dist
+          - .build
+          - .git
+          - .investigation

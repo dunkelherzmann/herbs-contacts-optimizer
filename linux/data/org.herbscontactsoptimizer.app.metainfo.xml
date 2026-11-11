@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.herbscontactsoptimizer.app</id>
+  <name>Herb's Contacts Optimizer</name>
+  <summary>Clean up your contacts</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.dunkelherzmann"><name>dunkelherzmann</name></developer>
+  <description>
+    <p>Finds duplicates, merges and repairs contacts, and moves them between files and accounts. A testing app, provided as is, without support.</p>
+  </description>
+  <launchable type="desktop-id">org.herbscontactsoptimizer.app.desktop</launchable>
+  <content_rating type="oars-1.1"/>
+</component>

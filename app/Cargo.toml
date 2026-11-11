@@ -1,0 +1,21 @@
+[package]
+name = "herbs-contacts-optimizer"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+eframe = "0.37.0"
+egui = "0.37.0"
+egui_extras = "0.37.0"
+hco-core = { version = "0.1.0", path = "../core" }
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg"] }
+rfd = "0.18.0"
+
+[dev-dependencies]
+egui_kittest = { version = "0.37.0", features = ["wgpu", "snapshot"] }
+image = { version = "0.25.10", default-features = false, features = ["png"] }
+hco-core = { path = "../core", features = ["mock"] }
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"

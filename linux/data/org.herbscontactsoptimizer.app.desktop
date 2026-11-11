@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Herb's Contacts Optimizer
+Comment=Clean up your contacts
+Exec=herbs-contacts-optimizer %F
+Icon=org.herbscontactsoptimizer.app
+Terminal=false
+Categories=Office;ContactManagement;
+MimeType=text/vcard;text/x-vcard;text/csv;
+StartupWMClass=org.herbscontactsoptimizer.app
