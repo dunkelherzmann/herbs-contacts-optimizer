@@ -12,6 +12,10 @@ hco-core = { version = "0.1.0", path = "../core" }
 image = { version = "0.25.10", default-features = false, features = ["png", "jpeg"] }
 rfd = "0.18.0"
 
+# Linux: the session bus, to ask Evolution Data Server for the computer's own address books.
+[target.'cfg(target_os = "linux")'.dependencies]
+zbus = { version = "5.19", default-features = false, features = ["async-io", "blocking-api"] }
+
 [dev-dependencies]
 egui_kittest = { version = "0.37.0", features = ["wgpu", "snapshot"] }
 image = { version = "0.25.10", default-features = false, features = ["png"] }
