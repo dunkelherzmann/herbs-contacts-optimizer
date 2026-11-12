@@ -165,7 +165,7 @@ fn the_toolbox_lists_every_tool_and_opens_one() {
         state.open_toolbox();
     });
     harness.run();
-    for kind in [Kind::Duplicates, Kind::InnerDuplicates, Kind::Similar, Kind::Merging, Kind::ManualMerging, Kind::Invalid, Kind::Missing, Kind::FillNames, Kind::Capitalization, Kind::CountryCodes, Kind::SimplifyNumbers, Kind::SearchReplace, Kind::MassDelete, Kind::MassDeleteData] {
+    for kind in [Kind::Duplicates, Kind::InnerDuplicates, Kind::Similar, Kind::Merging, Kind::ManualMerging, Kind::Invalid, Kind::Missing, Kind::FillNames, Kind::TidyNames, Kind::Capitalization, Kind::CountryCodes, Kind::SimplifyNumbers, Kind::SearchReplace, Kind::MassDelete, Kind::MassDeleteData] {
         harness.get_by_label(kind.title());
     }
     picture(&mut harness, "toolbox.png");
@@ -301,6 +301,81 @@ fn a_contact_is_edited_added_and_deleted() {
     assert!(contacts(&harness).iter().all(|c| c.first != "Eve"));
 }
 
+/// A book with one editable contact whose name parts are set.
+fn one_name(first: &str, middle: &str, last: &str) -> Book {
+    let c = Contact { first: first.into(), middle: middle.into(), last: last.into(), ..Contact::default() };
+    Book { name: "Names.vcf".into(), path: None, format: Format::VCard3, contacts: vec![c], changed: false, remote: None }
+}
+
+#[test]
+fn the_editor_flattens_and_splits_the_name() {
+    // Flatten joins the three parts into the Name field and empties the middle and last.
+    let mut harness = window(egui::Theme::Light, |state| {
+        state.add_book(one_name("Herbert", "Henry", "Harrison"));
+        state.selected = Some(0);
+        state.edit_contact(false);
+    });
+    harness.run();
+    picture(&mut harness, "editor-name-tools.png");
+    harness.get_by_label("Flatten").click();
+    harness.run();
+    harness.get_by_label("Save Contact").click();
+    harness.run();
+    let c = &contacts(&harness)[0];
+    assert_eq!((c.first.as_str(), c.middle.as_str(), c.last.as_str()), ("Herbert Henry Harrison", "", ""));
+
+    // Split pulls the Name field back into first, middle and last.
+    harness.state_mut().as_mut().unwrap().edit_contact(false);
+    harness.run();
+    harness.get_by_label("Split").click();
+    harness.run();
+    harness.get_by_label("Save Contact").click();
+    harness.run();
+    let c = &contacts(&harness)[0];
+    assert_eq!((c.first.as_str(), c.middle.as_str(), c.last.as_str()), ("Herbert", "Henry", "Harrison"));
+}
+
+/// A book with a merge artefact (the Name field repeats the parts) and a healthy contact.
+fn merged_book() -> Book {
+    let artefact = Contact { first: "Allan Michael Turing".into(), middle: "Michael".into(), last: "Turing".into(), display_name: "Allan Michael Turing".into(), ..Contact::default() };
+    let healthy = Contact { first: "Grace".into(), last: "Hopper".into(), display_name: "Grace Hopper".into(), ..Contact::default() };
+    Book { name: "Merged.vcf".into(), path: None, format: Format::VCard3, contacts: vec![artefact, healthy], changed: false, remote: None }
+}
+
+#[test]
+fn tidy_names_fixes_only_the_redundant_contacts() {
+    use herbs_contacts_optimizer::toolbox::Kind;
+
+    // The healthy contact is left out; keeping the full name empties the repeated parts.
+    let mut harness = window(egui::Theme::Light, |state| {
+        state.add_book(merged_book());
+        state.open_step(Kind::TidyNames);
+    });
+    harness.run();
+    picture(&mut harness, "step-tidy-names.png");
+    harness.get_by_label("1 of 1 selected");
+    harness.get_by_label("Fix 1 Contact").click();
+    harness.run();
+    let c = &contacts(&harness)[0];
+    assert_eq!((c.first.as_str(), c.middle.as_str(), c.last.as_str()), ("Allan Michael Turing", "", ""));
+    assert_eq!(contacts(&harness)[1].first, "Grace");
+
+    // Splitting the Name field is the other fix.
+    let mut harness = window(egui::Theme::Light, |state| {
+        state.add_book(merged_book());
+        state.open_step(Kind::TidyNames);
+    });
+    harness.run();
+    harness.get_by_label("Fix by: Keeping the full name").click();
+    harness.run();
+    harness.get_by_label("Splitting the Name into parts").click();
+    harness.run();
+    harness.get_by_label("Fix 1 Contact").click();
+    harness.run();
+    let c = &contacts(&harness)[0];
+    assert_eq!((c.first.as_str(), c.middle.as_str(), c.last.as_str()), ("Allan", "Michael", "Turing"));
+}
+
 fn type_into(harness: &mut Harness<'_, Option<AppState>>, label: &str, text: &str) {
     // Password fields have their own role.
     let role = if harness.query_by_role_and_label(egui::Role::TextInput, label).is_some() { egui::Role::TextInput } else { egui::Role::PasswordInput };
@@ -395,7 +470,7 @@ fn the_wizard_walks_the_steps_and_can_undo_everything() {
     harness.run();
 
     // No exact duplicates in this book, so the wizard goes straight to the second step.
-    harness.get_by_label("STEP 2 OF 10");
+    harness.get_by_label("STEP 2 OF 11");
     harness.get_by_label("Inner Duplicates");
     harness.get_by_label("Fix 1 Contact").click();
     harness.run();
@@ -428,7 +503,8 @@ fn the_wizard_walks_the_steps_and_can_undo_everything() {
 
     harness.get_by_label("Summary");
     harness.get_by_label("5 contacts before, 4 now. The file changes only when you save.");
-    harness.get_by_label("Nothing found.");
+    // Both the Duplicates and the Tidy Names steps found nothing in this book.
+    assert_eq!(harness.get_all_by_label("Nothing found.").count(), 2);
     picture(&mut harness, "wizard-summary.png");
     assert_eq!(contacts(&harness).len(), 4);
     assert_eq!(contacts(&harness)[0].display_name, "Ana García");

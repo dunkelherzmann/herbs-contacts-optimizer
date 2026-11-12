@@ -12,6 +12,7 @@ pub mod ldif;
 #[cfg(any(test, feature = "mock"))]
 pub mod mock;
 pub mod model;
+pub mod names;
 pub mod optimize;
 pub mod text;
 pub mod vault;

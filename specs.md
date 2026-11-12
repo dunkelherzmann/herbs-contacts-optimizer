@@ -260,6 +260,7 @@ yet; `core/src/osstore.rs` holds the seam and says so until one is.
 | Invalid contacts | No name and no data; a name of one character that is not an initial, or with `! ? _ # $ % * < >` in it; a phone number that is not 112 or 911, does not start with `*`, and has fewer than 5 or more than 15 digits; an e-mail address without exactly one `@`, or without a domain with a dot and two letters after it. |
 | Missing information | No name, or no phone number and no e-mail address. |
 | Fill in empty names | The nickname, then the organization, then the part of the e-mail address before `@`, then the phone number. |
+| Tidy names | A contact whose Name field already holds the whole name while the middle and last names repeat it (a leftover from merging two copies). Only flagged when the parts are redundant with the Name field — a healthy contact with the full name in its display name and the parts separate is left alone. The fix either keeps the full name in the Name field and empties the parts, or splits the Name field into first, middle and last. |
 | Capitalization | "JOHN SMITH" and "john smith" become "John Smith" and "MCDONALD" becomes "McDonald"; particles (van, de, von), names already in mixed case and e-mail addresses are left alone. |
 | Search and replace | Replaces the exact text, upper and lower case included, everywhere in the ticked contacts. |
 | Country codes | With the chosen country: an international prefix becomes `+`, a trunk prefix is dropped, and the country code is put in front of national numbers. |
@@ -281,10 +282,20 @@ from and written to vCard files of every version; a picture that is only a web a
 Save Contact keeps the changes; Cancel or Esc drops them. Delete Contact (⌫) asks first, with Cancel
 as the default.
 
+Under the name fields are Flatten and Split. Flatten puts the first, middle and last names on one line in
+First name and empties the middle and last ("Herbert", "Henry", "Harrison" become "Herbert Henry Harrison");
+it is off when there is no middle or last name to join. Split pulls the First name field back into first,
+middle and last — the first word is the first name, the last word the last name, and the rest the middle
+("Allan Michael Turing" becomes "Allan", "Michael", "Turing"); it is off when the field holds one word. Split
+is a guess on spaces, so unusual names (a particle like "van der", a two-word surname, a suffix) want a look
+afterwards.
+
 Every line of a step has Edit and Delete for its contact. Edit opens the editor and comes back to the step;
 Delete asks first, with Cancel as the default, and comes back too. The step then works out its lines anew.
 In Merge Contacts each set has an "Into" dropdown to choose which contact keeps its data and gains the
-others'; in Merge by Hand "Merge into" does the same for the ticked contacts. One at a Time shows a single
+others'; in Merge by Hand "Merge into" does the same for the ticked contacts. Tidy Names lists the contacts
+whose Name field repeats the middle and last names, with a "Fix by" dropdown — keep the full name (empty the
+parts) or split the Name into the three parts — and each line shows what it would become. One at a Time shows a single
 line with the contact's main details and Previous, Leave (untick and go on) and Select (tick and go on);
 after the last line the list is back for a look and the step's button.
 
@@ -300,7 +311,7 @@ while a number has none. Country data comes from libphonenumber and Unicode CLDR
 
 Wizard (toolbar, or Main Menu → Tools → Optimization Wizard) first lists its steps, all ticked: Duplicates,
 Inner Duplicates, Similar Contacts, Merge Contacts, Invalid Contacts, Missing Information, Fill In Empty
-Names, Capitalization, Country Codes, Simplify Numbers. Start runs the ticked ones in that order. Each is the same tick list
+Names, Tidy Names, Capitalization, Country Codes, Simplify Numbers. Start runs the ticked ones in that order. Each is the same tick list
 as in the Toolbox, with "Step N of M" above it, its own button to carry it out, and Skip. A step that finds
 nothing is passed over. Cancel Wizard stops and puts every contact back as it was. After the last step the
 Summary shows the contacts before and now and what each step did; Undo All puts everything back, Done keeps

@@ -72,6 +72,23 @@ impl Editor {
                 field(ui, "Name suffix", &mut c.suffix);
                 field(ui, "Display name", &mut c.display_name);
                 field(ui, "Nickname", &mut c.nickname);
+                ui.horizontal(|ui| {
+                    ui.add_space(LABEL + 8.0);
+                    let can_flatten = !c.middle.trim().is_empty() || !c.last.trim().is_empty();
+                    if ui.add_enabled(can_flatten, Button::new("Flatten"))
+                        .on_hover_text("Put the first, middle and last names on one line in First name, and empty the middle and last")
+                        .clicked()
+                    {
+                        c.flatten_name();
+                    }
+                    let can_split = c.first.split_whitespace().count() >= 2;
+                    if ui.add_enabled(can_split, Button::new("Split"))
+                        .on_hover_text("Split the First name field into first, middle and last — look it over, as unusual names won't always split right")
+                        .clicked()
+                    {
+                        c.split_name();
+                    }
+                });
 
                 typed_rows(ui, "PHONES", "phone", &mut c.phones);
                 if c.phones.iter().any(|p| hco_core::countries::lacks_country_code(&p.value)) {
