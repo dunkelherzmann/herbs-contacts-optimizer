@@ -1,5 +1,6 @@
 //! The computer's own accounts, read through the operating system: on macOS over the Contacts
-//! framework (`app/macos/contacts.m`), on Linux from Evolution Data Server over D-Bus. The window
+//! framework (`app/macos/contacts.m`), on Linux from Evolution Data Server over D-Bus, on Windows
+//! from the system's contact store. The window
 //! asks whether it is there with [`available`] and opens it with [`open`]. Read-only for now: it
 //! never changes a real contact.
 
@@ -190,14 +191,89 @@ mod linux {
     }
 }
 
+#[cfg(windows)]
+mod win {
+    //! Windows keeps one contact store for the accounts set up in its settings (the People app's).
+    //! It lists the address books, and hands each contact over as a vCard.
+    use hco_core::account::{Book, ContactStore};
+    use hco_core::carddav::Changes;
+    use hco_core::Contact;
+    use windows::core::{Error, HSTRING};
+    use windows::ApplicationModel::Contacts::{Contact as Card, ContactManager, ContactStore as Store, ContactStoreAccessType};
+    use windows::Storage::Streams::DataReader;
+    use windows::Win32::System::WinRT::{RoInitialize, RO_INIT_MULTITHREADED};
+
+    pub struct WindowsContacts {
+        store: Store,
+    }
+
+    fn failed(error: Error) -> String {
+        format!("Windows could not hand over its contacts: {}", error.message())
+    }
+
+    impl WindowsContacts {
+        pub fn open() -> Result<WindowsContacts, String> {
+            // A thread joins Windows' runtime before its first call; joining twice does no harm.
+            let _ = unsafe { RoInitialize(RO_INIT_MULTITHREADED) };
+            let store = ContactManager::RequestStoreAsyncWithAccessType(ContactStoreAccessType::AllContactsReadOnly)
+                .and_then(|asked| asked.join())
+                .map_err(|_| "Windows did not let the app read its contacts. You can allow it in Settings, under Privacy & security, Contacts.".to_string())?;
+            Ok(WindowsContacts { store })
+        }
+    }
+
+    /// One contact as the vCard Windows writes for it.
+    fn vcard(card: &Card) -> Result<Vec<u8>, Error> {
+        let stream = ContactManager::ConvertContactToVCardAsync(card)?.join()?.OpenReadAsync()?.join()?;
+        let size = stream.Size()? as u32;
+        let reader = DataReader::CreateDataReader(&stream.GetInputStreamAt(0)?)?;
+        reader.LoadAsync(size)?.join()?;
+        let mut bytes = vec![0u8; size as usize];
+        reader.ReadBytes(&mut bytes)?;
+        Ok(bytes)
+    }
+
+    impl ContactStore for WindowsContacts {
+        fn address_books(&self) -> Result<Vec<Book>, String> {
+            let lists = self.store.FindContactListsAsync().and_then(|asked| asked.join()).map_err(failed)?;
+            let mut books = Vec::new();
+            for list in lists {
+                let name = list.DisplayName().map(|name| name.to_string()).unwrap_or_default();
+                let name = if name.trim().is_empty() { "Windows contacts".to_string() } else { name };
+                books.push(Book { id: list.Id().map_err(failed)?.to_string(), name });
+            }
+            Ok(books)
+        }
+
+        fn read(&self, book: &str) -> Result<Vec<Contact>, String> {
+            let list = self.store.GetContactListAsync(&HSTRING::from(book)).and_then(|asked| asked.join()).map_err(failed)?;
+            let reader = list.GetContactReader().map_err(failed)?;
+            let mut contacts = Vec::new();
+            loop {
+                let batch = reader.ReadBatchAsync().and_then(|asked| asked.join()).and_then(|batch| batch.Contacts()).map_err(failed)?;
+                if batch.Size().map_err(failed)? == 0 {
+                    return Ok(contacts);
+                }
+                for card in batch {
+                    let bytes = vcard(&card).map_err(failed)?;
+                    contacts.extend(hco_core::read(&bytes).map(|(_, read)| read)?);
+                }
+            }
+        }
+
+        fn send(&self, _book: &str, _before: &[Contact], _now: &mut [Contact]) -> Result<Changes, String> {
+            Err(super::NO_WRITING.into())
+        }
+    }
+}
+
 use hco_core::account::ContactStore;
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
 const NO_WRITING: &str = "Writing back to this computer's own accounts is not built yet. Export the changes to a file instead.";
 
 /// Whether this computer offers an OS contacts store.
 pub fn available() -> bool {
-    cfg!(any(target_os = "macos", target_os = "linux"))
+    true
 }
 
 /// Opens the computer's own contacts, or says why it can't.
@@ -210,9 +286,9 @@ pub fn open() -> Result<Box<dyn ContactStore>, String> {
     {
         linux::Evolution::open().map(|store| Box::new(store) as Box<dyn ContactStore>)
     }
-    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    #[cfg(windows)]
     {
-        Err(hco_core::osstore::open().err().unwrap_or_default())
+        win::WindowsContacts::open().map(|store| Box::new(store) as Box<dyn ContactStore>)
     }
 }
 

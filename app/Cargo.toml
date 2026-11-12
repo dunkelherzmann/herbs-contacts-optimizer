@@ -16,6 +16,10 @@ rfd = "0.18.0"
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = { version = "5.19", default-features = false, features = ["async-io", "blocking-api"] }
 
+# Windows: the system's contact store, for the computer's own address books.
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = ["ApplicationModel_Contacts", "Foundation_Collections", "Storage_Streams", "Win32_System_WinRT"] }
+
 [dev-dependencies]
 egui_kittest = { version = "0.37.0", features = ["wgpu", "snapshot"] }
 image = { version = "0.25.10", default-features = false, features = ["png"] }

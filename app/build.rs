@@ -32,8 +32,9 @@ fn main() {
     {
         let mut resource = winresource::WindowsResource::new();
         resource.set_icon("assets/icon.ico");
-        resource.set("ProductName", "Herb's Contacts Optimizer");
-        resource.set("FileDescription", "Herb's Contacts Optimizer");
+        // The curved apostrophe: winresource writes the straight one with a backslash before it.
+        resource.set("ProductName", "Herb\u{2019}s Contacts Optimizer");
+        resource.set("FileDescription", "Herb\u{2019}s Contacts Optimizer");
         resource.set("LegalCopyright", "Herbert Cisneros");
         resource.compile().expect("the Windows icon resource");
     }

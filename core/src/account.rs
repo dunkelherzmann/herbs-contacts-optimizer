@@ -1,6 +1,6 @@
 //! The seam every account source plugs into, so the window drives a CardDAV server and the
 //! computer's own accounts through one interface. CardDAV is one source (`carddav`); the
-//! operating system's contacts store is another, one backend per platform (`osstore`).
+//! operating system's contacts store is another, one backend per platform (the app's `osaccounts`).
 
 use crate::carddav::{Changes, Client};
 use crate::Contact;

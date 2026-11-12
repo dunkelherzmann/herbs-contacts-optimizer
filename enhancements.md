@@ -5,14 +5,14 @@ Requests in the order received. `- [x]` once shipped, with the version.
 - [x] 2026-11-11 (all platforms): Study Contacts Optimizer for Android and list everything it does in `specs.md`. Done in 0.1.
 - [ ] 2026-11-11: The app for macOS first, then Linux and Windows, built on Rust.
   - [ ] Mac (0.1: opens vCard and CSV files, lists and searches contacts, finds and deletes duplicates, exports, contact editor, Toolbox; the rest is in `pending.md`)
-  - [ ] Linux
-  - [ ] Windows
+  - [ ] Linux (0.2: the same app as a Flatpak, built, installed and seen running; what was not shown is in `linux/pending.md`)
+  - [ ] Windows (0.2: the same app as one portable `.exe`, built, on the Desktop and seen running; what was not shown is in `windows/pending.md`)
 - [ ] 2026-11-11 (all platforms): Read and write every known contacts file format. vCard 2.1/3.0/4.0 and CSV in 0.1; the others are in `pending.md`.
 - [ ] 2026-11-11 (all platforms): Connect to Outlook, Google and iCloud accounts to scan, import, export and edit their contacts, alongside local files.
 - [ ] 2026-11-11: An About page with version and info, like Herb's Terminal's.
   - [x] Mac (0.1)
-  - [ ] Linux
-  - [ ] Windows
+  - [ ] Linux (in 0.2, drawn by the off-screen tests; not opened in the real window)
+  - [ ] Windows (in 0.2, drawn by the off-screen tests; not opened in the real window)
 - [x] 2026-11-11 (Mac; Linux and Windows come with their ports): Contact editor and Toolbox. Done in 0.1.
 - [x] 2026-11-11 (all platforms): Follow the reference app more closely in how duplicates, similar contacts, invalid contacts, names and capitalization are judged. Done in 0.1.
 - [x] 2026-11-11 (Mac; Linux and Windows come with their ports): Save back to the file with a backup, Restore, and the Optimization Wizard with its summary. Done in 0.1.
@@ -37,4 +37,5 @@ Requests in the order received. `- [x]` once shipped, with the version.
 - [ ] 2026-11-11 (all platforms): The toolbar buttons are the same, in the same places, on every platform; the Main Menu button does not move. (Mac: done in 0.1 (the Mac now has its ordinary title bar, so nothing has to make room for its window buttons))
 - [ ] 2026-11-12 (all platforms): In the editor, flatten the name parts into the Name field (first, middle, last become one line, middle and last emptied) and split a full Name back into first, middle and last. (Mac: done in 0.2, PR #4)
 - [ ] 2026-11-12 (all platforms): A Toolbox and wizard step that catches contacts where the Name field already holds the full name and the middle and last names repeat it (a merge artefact), and offers to tidy them, one at a time or all at once: merge the parts into the Name and empty the rest, or split the Name into the three parts. (Mac: done in 0.2, PR #4)
-- [ ] 2026-11-12 (all platforms): Read and write Google and Microsoft account contacts through the operating system's own contacts store (the accounts already signed in at OS level), so the app needs no developer registration. Evaluated 2026-11-12.
+- [ ] 2026-11-12 (all platforms): Read and write Google and Microsoft account contacts through the operating system's own contacts store (the accounts already signed in at OS level), so the app needs no developer registration. Evaluated 2026-11-12. Reading: Mac in 0.2 (PR #2); Linux in 0.2 from Evolution Data Server (PR #5), tried with a local address book, not with an online account; Windows in 0.2 from the Windows contact store (PR #6), tried only with an empty store. Writing back is open on all three.
+- [x] 2026-11-11: Publish the repository. Public since 2026-11-11 at https://github.com/dunkelherzmann/herbs-contacts-optimizer, as version 0.2.
