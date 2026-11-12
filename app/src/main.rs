@@ -37,7 +37,8 @@ fn main() -> eframe::Result {
         viewport = viewport.with_icon(icon);
     }
     // Every system draws its own title bar, so the toolbar below it is the same on all three.
-    let options = eframe::NativeOptions { viewport, ..Default::default() };
+    let mut options = eframe::NativeOptions { viewport, ..Default::default() };
+    herbs_contacts_optimizer::graphics(&mut options.wgpu_options.wgpu_setup);
     eframe::run_native(
         APP_NAME,
         options,

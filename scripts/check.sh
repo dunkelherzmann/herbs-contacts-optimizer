@@ -55,11 +55,15 @@ for machine in $MACHINES; do
         ;;
     windows)
         # Sent over ssh, but run in the signed-in desktop session (through mctl, a remote-control tool):
-        # the window tests need a graphics device, which an ssh session doesn't have.
-        (send | ssh -o ConnectTimeout=15 "$WINDOWS_HOST" "(if exist %TEMP%\\$DIR rmdir /s /q %TEMP%\\$DIR) & mkdir %TEMP%\\$DIR \
-            && tar -x -C %TEMP%\\$DIR && cd /d %TEMP%\\$DIR && cd" >"$LOGS/windows.where" 2>&1 \
+        # the window tests need a graphics device, which an ssh session doesn't have. The build folder is
+        # one kept outside Temp, named in the sent copy's cargo settings (a variable set on the mctl line
+        # doesn't reach cargo). Folders an interrupted check left more than a day ago are cleared first.
+        (send | ssh -o ConnectTimeout=15 "$WINDOWS_HOST" "(forfiles /p %TEMP% /m hco-check-* /d -1 /c \"cmd /c if @isdir==TRUE rmdir /s /q @path\" >nul 2>&1) \
+            & (if exist %TEMP%\\$DIR rmdir /s /q %TEMP%\\$DIR) & mkdir %TEMP%\\$DIR \
+            && tar -x -C %TEMP%\\$DIR && cd /d %TEMP%\\$DIR \
+            && (echo.& echo [build]& echo target-dir = \"%LOCALAPPDATA:\\=/%/hco-check-target\") >> .cargo\\config.toml && cd" >"$LOGS/windows.where" 2>&1 \
          && mctl exec windows --timeout 1800 --cwd "$(tail -1 "$LOGS/windows.where" | tr -d '\r')" -- \
-            cmd /c "set CARGO_TARGET_DIR=%LOCALAPPDATA%\\hco-check-target&& cargo test --workspace 2>&1 && cargo clippy --workspace --all-targets -- -D warnings 2>&1 && echo HCO_CHECK_PASSED" \
+            cmd /c "cargo test --workspace 2>&1 && cargo clippy --workspace --all-targets -- -D warnings 2>&1 && echo HCO_CHECK_PASSED" \
             >"$LOGS/windows.log" 2>&1
          grep -q HCO_CHECK_PASSED "$LOGS/windows.log"; echo $? >"$LOGS/windows.status"
          ssh -o ConnectTimeout=15 "$WINDOWS_HOST" "cd /d %TEMP% & rmdir /s /q %TEMP%\\$DIR" >/dev/null 2>&1) &
