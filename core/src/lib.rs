@@ -1,7 +1,9 @@
 //! The shared core of Herb's Contacts Optimizer: the contact model, the file formats and the
 //! optimization rules. No window code and no platform code lives here.
 
+pub mod account;
 pub mod carddav;
+pub mod osstore;
 pub mod cards;
 pub mod countries;
 mod countries_data;
