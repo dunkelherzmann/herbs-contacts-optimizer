@@ -18,6 +18,7 @@ pub enum Kind {
     Invalid,
     Missing,
     FillNames,
+    TidyNames,
     Capitalization,
     CountryCodes,
     SimplifyNumbers,
@@ -28,7 +29,7 @@ pub enum Kind {
 
 const GROUPS: [(&str, &[Kind]); 3] = [
     ("DUPLICATES AND MERGING", &[Kind::Duplicates, Kind::InnerDuplicates, Kind::Similar, Kind::Merging, Kind::ManualMerging]),
-    ("REPAIRS", &[Kind::Invalid, Kind::Missing, Kind::FillNames, Kind::Capitalization, Kind::CountryCodes, Kind::SimplifyNumbers, Kind::SearchReplace]),
+    ("REPAIRS", &[Kind::Invalid, Kind::Missing, Kind::FillNames, Kind::TidyNames, Kind::Capitalization, Kind::CountryCodes, Kind::SimplifyNumbers, Kind::SearchReplace]),
     ("MASS DELETE", &[Kind::MassDelete, Kind::MassDeleteData]),
 ];
 
@@ -43,6 +44,7 @@ impl Kind {
             Kind::Invalid => "Invalid Contacts",
             Kind::Missing => "Missing Information",
             Kind::FillNames => "Fill In Empty Names",
+            Kind::TidyNames => "Tidy Names",
             Kind::Capitalization => "Capitalization",
             Kind::CountryCodes => "Country Codes",
             Kind::SimplifyNumbers => "Simplify Numbers",
@@ -63,6 +65,7 @@ impl Kind {
             Kind::Invalid => "Find contacts that look wrong",
             Kind::Missing => "Find contacts without a name or a way to reach them",
             Kind::FillNames => "Name contacts that have none",
+            Kind::TidyNames => "Fix names where the parts repeat the Name field",
             Kind::Capitalization => "Fix names in all capitals or all small letters",
             Kind::CountryCodes => "Put a country code in front of numbers that have none",
             Kind::SimplifyNumbers => "Strip spaces and punctuation from phone numbers",
@@ -82,6 +85,7 @@ impl Kind {
             Kind::Invalid => "These contacts have no name and no data, a phone number without digits, or an e-mail address without @. Tick the ones to delete.",
             Kind::Missing => "These contacts have no name, or neither a phone number nor an e-mail address. Edit them to fill in what is missing.",
             Kind::FillNames => "These contacts have no name. Ticked ones are named after their company, e-mail address or phone number.",
+            Kind::TidyNames => "These contacts hold the whole name in the Name field and repeat it in the middle and last names (a leftover from merging). Choose a fix, then tick the ones to tidy.",
             Kind::Capitalization => "These names are in all capitals or all small letters. Ticked ones are fixed.",
             Kind::CountryCodes => "These numbers have no country code. Choose the country for all of them, then change it line by line where it differs: pick a country or type a code. Ticked numbers get their code.",
             Kind::SimplifyNumbers => "Ticked contacts keep only the digits and a leading + in their phone numbers.",
@@ -96,7 +100,7 @@ impl Kind {
     }
 
     fn ticked_in_advance(self) -> bool {
-        matches!(self, Kind::Duplicates | Kind::InnerDuplicates | Kind::FillNames | Kind::Capitalization | Kind::CountryCodes | Kind::SimplifyNumbers | Kind::SearchReplace)
+        matches!(self, Kind::Duplicates | Kind::InnerDuplicates | Kind::FillNames | Kind::TidyNames | Kind::Capitalization | Kind::CountryCodes | Kind::SimplifyNumbers | Kind::SearchReplace)
     }
 }
 
@@ -125,6 +129,9 @@ pub struct Step {
     /// Country Codes: the country and code for every line that has none of its own.
     pub country: Option<usize>,
     pub code: String,
+    /// Tidy Names: how to fix a redundant name — false joins the whole name into the Name field
+    /// (and empties the parts), true splits the Name field into first, middle and last.
+    pub split_names: bool,
     /// Shows one line at a time, at this place, when set.
     pub one_at_a_time: bool,
     pub at: usize,
@@ -150,7 +157,7 @@ fn shown_name(c: &Contact) -> String {
 
 impl Step {
     pub fn new(kind: Kind, contacts: &[Contact]) -> Self {
-        let mut step = Step { kind, proposals: Vec::new(), pattern: String::new(), replacement: String::new(), data: DataType::Note, country: None, code: String::new(), one_at_a_time: false, at: 0, target: None, wizard: None };
+        let mut step = Step { kind, proposals: Vec::new(), pattern: String::new(), replacement: String::new(), data: DataType::Note, country: None, code: String::new(), split_names: false, one_at_a_time: false, at: 0, target: None, wizard: None };
         step.refresh(contacts);
         step
     }
@@ -193,6 +200,25 @@ impl Step {
                 let mut named = c.clone();
                 optimize::fill_empty_name(&mut named).then(|| format!("→ {}", named.display_name))
             }),
+            Kind::TidyNames => {
+                let split = self.split_names;
+                contacts
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, c)| c.has_redundant_name())
+                    .map(|(index, c)| {
+                        let detail = if split {
+                            let (first, middle, last) = hco_core::names::split(&c.first);
+                            let parts: Vec<&str> = [first.as_str(), middle.as_str(), last.as_str()].into_iter().filter(|p| !p.is_empty()).collect();
+                            format!("→ split into {}", parts.join(" · "))
+                        } else {
+                            let dropped: Vec<&str> = [c.middle.as_str(), c.last.as_str()].into_iter().map(str::trim).filter(|p| !p.is_empty()).collect();
+                            format!("→ keep “{}”, drop {}", c.first, dropped.join(" and "))
+                        };
+                        Proposal { contacts: vec![index], title: c.first.clone(), detail, ticked, ..Proposal::default() }
+                    })
+                    .collect()
+            }
             Kind::Capitalization => each(&|c| {
                 let mut fixed = c.clone();
                 optimize::capitalize_contact(&mut fixed).then(|| format!("→ {}", fixed.name()))
@@ -309,6 +335,13 @@ impl Step {
                     match self.kind {
                         Kind::InnerDuplicates => drop(optimize::remove_inner_duplicates(c)),
                         Kind::FillNames => drop(optimize::fill_empty_name(c)),
+                        Kind::TidyNames => {
+                            if self.split_names {
+                                c.split_name();
+                            } else {
+                                c.keep_full_name();
+                            }
+                        }
                         Kind::Capitalization => drop(optimize::capitalize_contact(c)),
                         Kind::SimplifyNumbers => drop(optimize::simplify_numbers(c)),
                         Kind::SearchReplace => drop(optimize::replace_text(c, &self.pattern, &self.replacement)),
@@ -360,6 +393,20 @@ impl Step {
                     });
                     combo.response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, format!("Data to delete: {}", self.data.label())));
                     again |= before != self.data;
+                });
+            }
+            if self.kind == Kind::TidyNames {
+                ui.horizontal(|ui| {
+                    ui.label("Fix by");
+                    let before = self.split_names;
+                    let label = |split: bool| if split { "Splitting the Name into parts" } else { "Keeping the full name" };
+                    let combo = egui::ComboBox::from_id_salt("tidy").selected_text(label(self.split_names)).width(220.0).show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.split_names, false, label(false));
+                        ui.selectable_value(&mut self.split_names, true, label(true));
+                    });
+                    combo.response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, format!("Fix by: {}", label(self.split_names))));
+                    combo.response.on_hover_text("Keep the whole name in the Name field and empty the parts, or split the Name field into first, middle and last");
+                    again |= before != self.split_names;
                 });
             }
             if again {
@@ -666,7 +713,7 @@ pub fn country_picker(ui: &mut egui::Ui, salt: &str, country: &mut Option<usize>
 }
 
 /// The steps the wizard offers, in the order it runs them.
-pub const WIZARD_STEPS: [Kind; 10] = [
+pub const WIZARD_STEPS: [Kind; 11] = [
     Kind::Duplicates,
     Kind::InnerDuplicates,
     Kind::Similar,
@@ -674,6 +721,7 @@ pub const WIZARD_STEPS: [Kind; 10] = [
     Kind::Invalid,
     Kind::Missing,
     Kind::FillNames,
+    Kind::TidyNames,
     Kind::Capitalization,
     Kind::CountryCodes,
     Kind::SimplifyNumbers,
