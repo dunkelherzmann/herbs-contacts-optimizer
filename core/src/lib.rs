@@ -3,7 +3,6 @@
 
 pub mod account;
 pub mod carddav;
-pub mod osstore;
 pub mod cards;
 pub mod countries;
 mod countries_data;
