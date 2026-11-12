@@ -35,7 +35,9 @@ fn sample() -> Book {
 
 /// A window of the given state, 1000 × 780 points at double sharpness.
 fn window<'a>(theme: egui::Theme, prepare: impl Fn(&mut AppState) + 'a) -> Harness<'a, Option<AppState>> {
-    Harness::builder().with_size([1000.0, 780.0]).with_pixels_per_point(2.0).with_theme(theme).build_ui_state(
+    let mut graphics = egui_kittest::wgpu::default_wgpu_setup();
+    herbs_contacts_optimizer::graphics(&mut graphics);
+    Harness::builder().with_size([1000.0, 780.0]).with_pixels_per_point(2.0).with_theme(theme).wgpu_setup(graphics).build_ui_state(
         move |ui, state: &mut Option<AppState>| {
             state
                 .get_or_insert_with(|| {
