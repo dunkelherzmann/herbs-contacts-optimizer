@@ -240,13 +240,17 @@ One backend per platform, each behind the same seam as a CardDAV account (`core/
 
 | Platform | Through | Read | Write back |
 |---|---|---|---|
-| macOS | the Contacts framework (`CNContactStore`) | every configured account | yes |
-| Linux | Evolution Data Server with GNOME Online Accounts (D-Bus) | where that stack is installed | yes, there |
-| Windows | the WinRT contact store | yes | limited by the platform; may be read-only |
+| macOS | the Contacts framework (`CNContactStore`) | every configured account | not yet |
+| Linux | Evolution Data Server over D-Bus: its local address books and those of GNOME Online Accounts | where that stack is installed | not yet |
+| Windows | the Windows contact store (`Windows.ApplicationModel.Contacts`) | its address books | not yet; the platform limits it |
 
-The OS asks for permission the first time (on the Mac, the system's Contacts prompt). An account read this way
-appears in the sidebar like any other, and its changes go back only on Save. None of the backends is built
-yet; `core/src/osstore.rs` holds the seam and says so until one is.
+Accounts → Add This Computer's Accounts… reads every address book that holds contacts and lists each in the
+sidebar; the backends live in `app/src/osaccounts.rs`. The Mac asks for permission the first time (the
+system's Contacts prompt); Linux and Windows hand the contacts over without asking. On Linux an address book
+is named with the account or place it belongs to ("Personal (On This Computer)"), and the Flatpak is allowed
+to talk to Evolution Data Server; desktops that keep contacts elsewhere (KDE's Akonadi) are not reached. On
+Windows each contact arrives as the vCard Windows writes for it. All three are read-only for now: these
+address books have no file and no server, so Save offers to export them.
 
 ## 6. Optimization rules
 
@@ -351,5 +355,6 @@ and each is built and tested on its own system. What differs:
   toolbar is the same on all three: Main Menu first, then Open, Save, Export, Find Duplicates, Wizard,
   Toolbox and New Contact, in that order and in the same places. Shortcuts use Ctrl where the Mac uses ⌘.
 - The Mac draws text in its own font; Linux and Windows carry the Inter font inside the app.
+- On Windows the app draws with Direct3D 12 or Vulkan and never asks for OpenGL.
 - `--self-check` starts the program without a window, tries the core, and says whether it passed; every
   build script ends with it. On Windows it prints nothing; its exit code tells.

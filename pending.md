@@ -37,4 +37,6 @@ What `specs.md` describes and the app does not do yet, in build order.
   window yet. The question on closing with unsaved changes has no test: it needs the real window.
 - VoiceOver has not been tried.
 
+- Add This Computer's Accounts reads but does not write back, on any system.
+
 Linux and Windows have their own lists: `linux/pending.md`, `windows/pending.md`.

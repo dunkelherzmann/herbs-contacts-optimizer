@@ -38,7 +38,8 @@ macOS first, then Linux and Windows, in Rust.
   `vault.rs` (the sealed store), `mock.rs` (pretend CardDAV server for tests, feature `mock`).
 - `app/src`: `theme.rs` (Finder's colours for both appearances, and nothing else of Finder: the layout
   and the shapes are the app's own; take colours from `theme::of(ui)`, never hard-code them), `ui.rs` (window, list, sidebar, dialogs), `toolbox.rs` (steps and wizard), `editor.rs`,
-  `bulk.rs`, `accounts.rs` (helper thread plus a "working" dialog).
+  `bulk.rs`, `accounts.rs` (helper thread plus a "working" dialog), `osaccounts.rs` (the computer's own accounts: one
+  backend per system behind `ContactStore`; `--read-os-accounts [--out FILE]` lists them without the window).
 - A dialog handler returns the next `Dialog`; one that starts a job returns
   `std::mem::replace(&mut self.dialog, Dialog::None)` so the "working" dialog it set survives.
 - `scripts/mark-done.py "text" "note"` adds a platform note to one line of `enhancements.md`.
@@ -51,6 +52,13 @@ macOS first, then Linux and Windows, in Rust.
 - The off-screen tests fail a widget without a name for screen readers (a `ComboBox` without a label, a
   bare `Checkbox`): give it one with `response.widget_info(...)`.
 - Anything that changes the contacts must clear `selected` and `checked`: both hold positions.
+- A test or build on Windows that never ends, or a `window-*.exe` that will not link (LNK1104): look for a
+  message box in the desktop session (`mctl windows windows`); a stuck test keeps its `.exe` open.
+- Starting the Windows `.exe` through `mctl exec` fails on the spaces in its name: use the `master-control`
+  MCP `exec` with `argv`. On Windows the window's controls can be pressed by name; in the Linux Flatpak they
+  are not exposed, so click by position there.
+- An Evolution Data Server address book opened over D-Bus lives only as long as the connection that opened
+  it: open, read and write on one connection (`busctl` calls each make their own).
 
 - egui 0.37 differs from older examples: `eframe::App::ui(&mut self, ui, frame)`, `egui::Panel::top/left/…`
   with `.show(ui, …)`, `egui::Id::unique`, `egui::Role`. Read the crate source in `~/.cargo/registry` before
