@@ -20,6 +20,8 @@ pub struct BookRemote {
 pub enum Outcome {
     Loaded { account: Account, new: bool, books: Vec<(carddav::Collection, Vec<Contact>)> },
     Sent { url: String, contacts: Vec<Contact>, changes: Changes },
+    /// Address books read from this computer's own accounts: name and contacts, each book.
+    LoadedLocal(Vec<(String, Vec<Contact>)>),
     Failed(String),
 }
 
@@ -110,6 +112,29 @@ impl AppState {
                 };
                 let _ = report.send(outcome);
             }
+        });
+    }
+
+    /// Reads the accounts set up on this computer (the Contacts app on the Mac) and adds each of
+    /// their address books. Read-only: these books have no file and no server, so Save offers to
+    /// export them.
+    pub fn add_local_accounts(&mut self) {
+        self.start("Reading this computer's contacts…", |report| {
+            let read = (|| -> Result<Vec<(String, Vec<Contact>)>, String> {
+                let store = crate::osaccounts::open()?;
+                let mut books = Vec::new();
+                for book in store.address_books()? {
+                    let contacts = store.read(&book.id)?;
+                    if !contacts.is_empty() {
+                        books.push((book.name, contacts));
+                    }
+                }
+                Ok(books)
+            })();
+            let _ = report.send(match read {
+                Ok(books) => Outcome::LoadedLocal(books),
+                Err(error) => Outcome::Failed(error),
+            });
         });
     }
 
@@ -231,6 +256,21 @@ impl AppState {
                 self.selected = None;
                 self.checked.clear();
                 self.status = format!("Loaded {} from {}.", count(total, "contact"), account.name);
+            }
+            Outcome::LoadedLocal(books) => {
+                if books.is_empty() {
+                    self.status = "This computer's accounts hold no contacts to read.".to_string();
+                } else {
+                    let total: usize = books.iter().map(|(_, contacts)| contacts.len()).sum();
+                    let n = books.len();
+                    for (name, contacts) in books {
+                        self.books.push(Book { name, path: None, format: Format::VCard3, contacts, changed: false, remote: None });
+                    }
+                    self.current = self.books.len() - 1;
+                    self.selected = None;
+                    self.checked.clear();
+                    self.status = format!("Loaded {} from {} on this computer.", count(total, "contact"), count(n, "address book"));
+                }
             }
             Outcome::Sent { url, contacts, changes } => {
                 if let Some(book) = self.books.iter_mut().find(|b| b.remote.as_ref().is_some_and(|r| r.url == url)) {
