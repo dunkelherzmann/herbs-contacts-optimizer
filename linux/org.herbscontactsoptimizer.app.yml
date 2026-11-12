@@ -15,6 +15,12 @@ finish-args:
   - --device=dri
   # Contact files are opened, saved back in place and exported wherever the user keeps them.
   - --filesystem=home
+  # Screen readers and other assistive tools find the window through the accessibility bus.
+  - --talk-name=org.a11y.Bus
+  # The computer's own accounts: Evolution Data Server's list of address books and their contacts.
+  - --talk-name=org.gnome.evolution.dataserver.Sources5
+  - --talk-name=org.gnome.evolution.dataserver.AddressBook10
+  - --talk-name=org.gnome.evolution.dataserver.Subprocess.Backend.*
 build-options:
   append-path: /usr/lib/sdk/rust-stable/bin
   # Local builds fetch the crates with cargo (a Flathub build would vendor them).
