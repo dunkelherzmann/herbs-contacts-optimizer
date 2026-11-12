@@ -25,6 +25,9 @@ fn main() -> eframe::Result {
     if std::env::args().any(|arg| arg == "--self-check") {
         std::process::exit(if self_check() { 0 } else { 1 });
     }
+    if std::env::args().any(|arg| arg == "--read-os-accounts") {
+        std::process::exit(herbs_contacts_optimizer::osaccounts::diagnostic());
+    }
     let mut viewport = egui::ViewportBuilder::default()
         .with_title(APP_NAME)
         .with_app_id("org.herbscontactsoptimizer.app")

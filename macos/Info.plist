@@ -14,5 +14,6 @@
     <key>LSMinimumSystemVersion</key><string>15.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSPrincipalClass</key><string>NSApplication</string>
+    <key>NSContactsUsageDescription</key><string>Herb's Contacts Optimizer reads the contacts from the accounts set up on this Mac so you can clean them up.</string>
 </dict>
 </plist>
