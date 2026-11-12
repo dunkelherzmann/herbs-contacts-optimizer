@@ -22,6 +22,12 @@ fixes, and parts of it are unfinished. `pending.md` says which.
 Saving to an account has only been tried against a test server, never against a real iCloud, Fastmail or
 Nextcloud account. Export a backup of your contacts first. Google and Microsoft accounts are not built yet.
 
+## Getting it
+
+Prebuilt files for all three systems are on the
+[Releases](https://github.com/dunkelherzmann/herbs-contacts-optimizer/releases) page, with how to open each.
+Or build it yourself.
+
 ## Building it
 
 You need Rust and nothing else on the Mac.
