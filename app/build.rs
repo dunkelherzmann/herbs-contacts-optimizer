@@ -20,6 +20,14 @@ fn main() {
     let version = written.or_else(counted).unwrap_or_else(|| format!("{}.0", std::fs::read_to_string("../VERSION").unwrap_or_default().trim()));
     println!("cargo:rustc-env=HCO_VERSION={version}");
 
+    #[cfg(target_os = "macos")]
+    {
+        println!("cargo:rerun-if-changed=macos/contacts.m");
+        cc::Build::new().file("macos/contacts.m").flag("-fobjc-arc").compile("hco_contacts");
+        println!("cargo:rustc-link-lib=framework=Contacts");
+        println!("cargo:rustc-link-lib=framework=Foundation");
+    }
+
     #[cfg(windows)]
     {
         let mut resource = winresource::WindowsResource::new();

@@ -228,6 +228,26 @@ account anew; Remove Account takes it out of the app and its store and leaves th
 Sign-in tokens and passwords are kept in the app's own encrypted store, protected by an app password the user
 sets. The macOS Keychain is not used. Nothing is sent anywhere except to the account's own service.
 
+### 5.1 The computer's own accounts
+
+Besides a CardDAV address and password, the app can read the accounts already signed in to the operating
+system (iCloud, Google, Exchange and the rest, as set up in the system's own settings), through the OS, so
+it needs no account of its own and no developer registration. This is how the Android reference app reached
+online accounts: it read the phone's system contacts, where the OS already held them.
+
+One backend per platform, each behind the same seam as a CardDAV account (`core/src/account.rs`,
+`ContactStore`):
+
+| Platform | Through | Read | Write back |
+|---|---|---|---|
+| macOS | the Contacts framework (`CNContactStore`) | every configured account | yes |
+| Linux | Evolution Data Server with GNOME Online Accounts (D-Bus) | where that stack is installed | yes, there |
+| Windows | the WinRT contact store | yes | limited by the platform; may be read-only |
+
+The OS asks for permission the first time (on the Mac, the system's Contacts prompt). An account read this way
+appears in the sidebar like any other, and its changes go back only on Save. None of the backends is built
+yet; `core/src/osstore.rs` holds the seam and says so until one is.
+
 ## 6. Optimization rules
 
 | Step | Rule |

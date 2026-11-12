@@ -1791,6 +1791,7 @@ dependencies = [
 name = "herbs-contacts-optimizer"
 version = "0.1.0"
 dependencies = [
+ "cc",
  "eframe",
  "egui",
  "egui_extras",

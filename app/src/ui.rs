@@ -113,6 +113,7 @@ enum Command {
     SortBy(Sort),
     Appear(Appearance),
     AddAccount,
+    AddLocalAccounts,
     UnlockAccounts,
     ReloadAccount,
     RemoveAccount,
@@ -499,6 +500,7 @@ impl AppState {
             Command::SortBy(sort) => self.sort_by(sort),
             Command::Appear(appearance) => self.set_appearance(appearance),
             Command::AddAccount => self.add_account(),
+            Command::AddLocalAccounts => self.add_local_accounts(),
             Command::UnlockAccounts => self.unlock_accounts(),
             Command::ReloadAccount => self.reload_account(),
             Command::RemoveAccount => self.ask_to_remove_account(),
@@ -731,6 +733,7 @@ impl AppState {
             ui.menu_button("Accounts", |ui| {
                 let in_account = self.current_account().is_some();
                 item(ui, command, Command::AddAccount, true, "Add Account…", "", "Connect iCloud or another contacts server");
+                item(ui, command, Command::AddLocalAccounts, crate::osaccounts::available(), "Add This Computer's Accounts…", "", "Read the contacts from the accounts set up on this computer");
                 item(ui, command, Command::UnlockAccounts, self.accounts_locked(), "Unlock Accounts…", "", "Open the stored sign-ins and load the accounts");
                 ui.separator();
                 item(ui, command, Command::ReloadAccount, in_account, "Load Again", "", "Read this account's address books from the server again");

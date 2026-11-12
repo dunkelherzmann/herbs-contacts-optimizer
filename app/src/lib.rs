@@ -1,6 +1,7 @@
 //! The window of Herb's Contacts Optimizer. `ui` draws it; `main.rs` only opens it.
 
 pub mod accounts;
+pub mod osaccounts;
 pub mod bulk;
 pub mod editor;
 pub mod theme;
