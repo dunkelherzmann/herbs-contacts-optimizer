@@ -65,7 +65,7 @@ impl Kind {
             Kind::Invalid => "Find contacts that look wrong",
             Kind::Missing => "Find contacts without a name or a way to reach them",
             Kind::FillNames => "Name contacts that have none",
-            Kind::TidyNames => "Fix names where the parts repeat the Name field",
+            Kind::TidyNames => "Join every name into the Name field, or split it into parts",
             Kind::Capitalization => "Fix names in all capitals or all small letters",
             Kind::CountryCodes => "Put a country code in front of numbers that have none",
             Kind::SimplifyNumbers => "Strip spaces and punctuation from phone numbers",
@@ -85,7 +85,7 @@ impl Kind {
             Kind::Invalid => "These contacts have no name and no data, a phone number without digits, or an e-mail address without @. Tick the ones to delete.",
             Kind::Missing => "These contacts have no name, or neither a phone number nor an e-mail address. Edit them to fill in what is missing.",
             Kind::FillNames => "These contacts have no name. Ticked ones are named after their company, e-mail address or phone number.",
-            Kind::TidyNames => "These contacts hold the whole name in the Name field and repeat it in the middle and last names (a leftover from merging). Choose a fix, then tick the ones to tidy.",
+            Kind::TidyNames => "Every contact whose name the fix would change. Joining puts the whole name in the Name field and empties the middle and last; splitting puts it in first, middle and last. Names that repeat the middle and last in the Name field (a leftover from merging) come ticked.",
             Kind::Capitalization => "These names are in all capitals or all small letters. Ticked ones are fixed.",
             Kind::CountryCodes => "These numbers have no country code. Choose the country for all of them, then change it line by line where it differs: pick a country or type a code. Ticked numbers get their code.",
             Kind::SimplifyNumbers => "Ticked contacts keep only the digits and a leading + in their phone numbers.",
@@ -165,6 +165,52 @@ impl Step {
         step
     }
 
+    /// Works out the lines again after an Edit or a Delete (`removed`: the place of the deleted
+    /// contact), keeping the ticks and choices made on the lines that are still there.
+    pub fn refresh_keeping(&mut self, contacts: &[Contact], removed: Option<usize>) {
+        let shift = |i: usize| match removed {
+            Some(r) if i == r => None,
+            Some(r) if i > r => Some(i - 1),
+            _ => Some(i),
+        };
+        let old: Vec<Proposal> = std::mem::take(&mut self.proposals)
+            .into_iter()
+            .filter_map(|mut p| {
+                p.contacts = p.contacts.iter().filter_map(|&i| shift(i)).collect();
+                (!p.contacts.is_empty()).then_some(p)
+            })
+            .collect();
+        self.target = self.target.and_then(shift);
+        if let Some(r) = removed {
+            if self.one_at_a_time && self.at > r {
+                self.at -= 1;
+            }
+        }
+        self.refresh(contacts);
+        let sorted = |set: &[usize]| {
+            let mut set = set.to_vec();
+            set.sort_unstable();
+            set
+        };
+        for p in &mut self.proposals {
+            if let Some(o) = old.iter().find(|o| sorted(&o.contacts) == sorted(&p.contacts) && o.phone == p.phone) {
+                p.ticked = o.ticked;
+                if self.kind == Kind::Merging {
+                    // The contact chosen to merge into stays chosen.
+                    p.contacts = o.contacts.clone();
+                    let others: Vec<String> = p.contacts[1..].iter().map(|&i| shown_name(&contacts[i])).collect();
+                    p.title = shown_name(&contacts[p.contacts[0]]);
+                    p.detail = format!("+ {}", others.join(", "));
+                }
+                if self.kind == Kind::CountryCodes {
+                    (p.code, p.country) = (o.code.clone(), o.country);
+                }
+            } else if let Some(o) = old.iter().find(|o| o.contacts.first() == p.contacts.first() && o.phone == p.phone) {
+                p.ticked = o.ticked;
+            }
+        }
+    }
+
     /// Works out the lines again, from the contacts as they are now.
     pub fn refresh(&mut self, contacts: &[Contact]) {
         let ticked = self.kind.ticked_in_advance();
@@ -208,17 +254,18 @@ impl Step {
                 contacts
                     .iter()
                     .enumerate()
-                    .filter(|(_, c)| c.has_redundant_name())
-                    .map(|(index, c)| {
+                    .filter_map(|(index, c)| c.tidied_name(split).map(|parts| (index, c, parts)))
+                    .map(|(index, c, (first, middle, last))| {
                         let detail = if split {
-                            let (first, middle, last) = hco_core::names::split(&c.first);
                             let parts: Vec<&str> = [first.as_str(), middle.as_str(), last.as_str()].into_iter().filter(|p| !p.is_empty()).collect();
-                            format!("→ split into {}", parts.join(" · "))
+                            format!("→ {}", parts.join(" · "))
                         } else {
-                            let dropped: Vec<&str> = [c.middle.as_str(), c.last.as_str()].into_iter().map(str::trim).filter(|p| !p.is_empty()).collect();
-                            format!("→ keep “{}”, drop {}", c.first, dropped.join(" and "))
+                            format!("→ “{first}”")
                         };
-                        Proposal { contacts: vec![index], title: c.first.clone(), detail, ticked, ..Proposal::default() }
+                        // The name fields as they are now, each on its own: "Grace · Hopper".
+                        let title = [c.first.trim(), c.middle.trim(), c.last.trim()].into_iter().filter(|p| !p.is_empty()).collect::<Vec<_>>().join(" · ");
+                        // The merge artefacts are sure fixes; any other name waits for a tick.
+                        Proposal { contacts: vec![index], title, detail, ticked: c.has_redundant_name(), ..Proposal::default() }
                     })
                     .collect()
             }
@@ -355,13 +402,7 @@ impl Step {
                     match self.kind {
                         Kind::InnerDuplicates => drop(optimize::remove_inner_duplicates(c)),
                         Kind::FillNames => drop(optimize::fill_empty_name(c)),
-                        Kind::TidyNames => {
-                            if self.split_names {
-                                c.split_name();
-                            } else {
-                                c.keep_full_name();
-                            }
-                        }
+                        Kind::TidyNames => drop(c.tidy_name(self.split_names)),
                         Kind::Capitalization => drop(optimize::capitalize_contact(c)),
                         Kind::SimplifyNumbers => drop(optimize::simplify_numbers(c)),
                         Kind::SearchReplace => drop(optimize::replace_text(c, &self.pattern, &self.replacement)),
@@ -419,13 +460,13 @@ impl Step {
                 ui.horizontal(|ui| {
                     ui.label("Fix by");
                     let before = self.split_names;
-                    let label = |split: bool| if split { "Splitting the Name into parts" } else { "Keeping the full name" };
+                    let label = |split: bool| if split { "Splitting the Name into parts" } else { "Joining the whole name into the Name field" };
                     let combo = egui::ComboBox::from_id_salt("tidy").selected_text(label(self.split_names)).width(220.0).show_ui(ui, |ui| {
                         ui.selectable_value(&mut self.split_names, false, label(false));
                         ui.selectable_value(&mut self.split_names, true, label(true));
                     });
                     combo.response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, format!("Fix by: {}", label(self.split_names))));
-                    combo.response.on_hover_text("Keep the whole name in the Name field and empty the parts, or split the Name field into first, middle and last");
+                    combo.response.on_hover_text("Join first, middle and last into the Name field, or split the whole name into first, middle and last");
                     again |= before != self.split_names;
                 });
             }
@@ -456,21 +497,23 @@ impl Step {
                     format!("{} of {} selected", self.ticked(), found)
                 };
                 ui.label(RichText::new(text).small().weak());
-                if ticks && found > 0 {
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if !book.contacts.is_empty() {
                         let label = if self.one_at_a_time { "Show the List" } else { "One at a Time" };
-                        if ui.small_button(label).on_hover_text("Go through the lines one by one, or see them all").clicked() {
+                        if ui.small_button(label).on_hover_text("Go through every contact one by one, or see the list of what the step found").clicked() {
                             self.one_at_a_time = !self.one_at_a_time;
                             self.at = 0;
                         }
+                    }
+                    if ticks && found > 0 {
                         if ui.small_button("Deselect All").on_hover_text("Untick every line").clicked() {
                             self.proposals.iter_mut().for_each(|p| p.ticked = false);
                         }
                         if ui.small_button("Select All").on_hover_text("Tick every line").clicked() {
                             self.proposals.iter_mut().for_each(|p| p.ticked = true);
                         }
-                    });
-                }
+                    }
+                });
             });
             ui.separator();
             if kind == Kind::ManualMerging && self.ticked() >= 2 {
@@ -494,48 +537,85 @@ impl Step {
                 self.target = Some(target);
             }
             let len = self.proposals.len();
-            if self.one_at_a_time && len > 0 {
-                self.at = self.at.min(len - 1);
+            let total = book.contacts.len();
+            if self.one_at_a_time && total > 0 {
+                // Every contact in turn, with whatever lines of the step are about it.
+                self.at = self.at.min(total - 1);
                 let at = self.at;
                 let mut go = 0i64;
-                let proposal = &mut self.proposals[at];
+                let c = &book.contacts[at];
                 ui.add_space(4.0);
-                ui.label(RichText::new(format!("LINE {} OF {len}", at + 1)).small().weak());
-                ui.label(RichText::new(proposal.title.as_str()).size(16.0).strong());
-                let mut on = self.preview == Some(at);
-                ui.horizontal(|ui| line_controls(ui, kind, proposal, &book.contacts, &mut edit, &mut delete, &mut on, false));
-                if on != (self.preview == Some(at)) {
-                    self.preview = on.then_some(at);
-                }
-                ui.add_space(4.0);
-                for &index in &proposal.contacts {
-                    let c = &book.contacts[index];
-                    let work: Vec<&str> = [c.title.as_str(), c.company.as_str()].into_iter().filter(|t| !t.is_empty()).collect();
-                    let facts: Vec<String> = [shown_name(c), reach(c), work.join(", "), c.addresses.first().map(|a| a.one_line()).unwrap_or_default()].into_iter().filter(|f| !f.is_empty()).collect();
-                    ui.add(Label::new(RichText::new(facts.join("  ·  ")).weak()).wrap());
-                }
-                ui.add_space(8.0);
+                ui.label(RichText::new(format!("CONTACT {} OF {total}", at + 1)).small().weak());
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(at > 0, Button::new("Previous")).on_hover_text("Back to the line before").clicked() {
-                        go = -1;
-                    }
+                    ui.label(RichText::new(shown_name(c)).size(16.0).strong());
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        if ui.button("Select").on_hover_text("Tick this line and go on").clicked() {
-                            proposal.ticked = true;
-                            go = 1;
+                        if ui.small_button("Delete").on_hover_text("Delete this contact, after asking, then come back here").clicked() {
+                            delete = Some(at);
                         }
-                        if ui.button("Leave").on_hover_text("Untick this line and go on").clicked() {
-                            proposal.ticked = false;
-                            go = 1;
+                        if ui.small_button("Edit").on_hover_text("Open this contact in the editor, then come back here").clicked() {
+                            edit = Some(at);
                         }
-                        ui.label(RichText::new(if proposal.ticked { "selected" } else { "not selected" }).small().weak());
                     });
                 });
-                if go > 0 && at + 1 == len {
-                    // The last line: back to the list, to look it over and press the step's button.
+                let work: Vec<&str> = [c.title.as_str(), c.company.as_str()].into_iter().filter(|t| !t.is_empty()).collect();
+                let facts: Vec<String> = [reach(c), work.join(", "), c.addresses.first().map(|a| a.one_line()).unwrap_or_default()].into_iter().filter(|f| !f.is_empty()).collect();
+                if !facts.is_empty() {
+                    ui.add(Label::new(RichText::new(facts.join("  ·  ")).weak()).wrap());
+                }
+                ui.add_space(6.0);
+                let lines: Vec<usize> = (0..len).filter(|&line| self.proposals[line].contacts.contains(&at)).collect();
+                if lines.is_empty() {
+                    ui.label(RichText::new("Nothing for this step in this contact.").weak());
+                }
+                for &line in &lines {
+                    let proposal = &mut self.proposals[line];
+                    let mut on = self.preview == Some(line);
+                    ui.push_id(line, |ui| {
+                        ui.horizontal(|ui| {
+                            if ticks {
+                                ui.checkbox(&mut proposal.ticked, proposal.title.as_str());
+                            } else {
+                                ui.label(proposal.title.as_str());
+                            }
+                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| line_controls(ui, kind, proposal, &book.contacts, &mut edit, &mut delete, &mut on, false, true));
+                        });
+                    });
+                    if on != (self.preview == Some(line)) {
+                        self.preview = on.then_some(line);
+                    }
+                }
+                let found_after = (at + 1..total).find(|i| self.proposals.iter().any(|p| p.contacts.contains(i)));
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    if ui.add_enabled(at > 0, Button::new("Previous")).on_hover_text("Back to the contact before").clicked() {
+                        go = -1;
+                    }
+                    if ui.add_enabled(found_after.is_some(), Button::new("Next Found")).on_hover_text("Skip to the next contact the step found something in").clicked() {
+                        go = found_after.map_or(0, |i| (i - at) as i64);
+                    }
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        if ticks && !lines.is_empty() {
+                            if ui.button("Select").on_hover_text("Tick this contact's lines and go on").clicked() {
+                                lines.iter().for_each(|&line| self.proposals[line].ticked = true);
+                                go = 1;
+                            }
+                            if ui.button("Leave").on_hover_text("Untick this contact's lines and go on").clicked() {
+                                lines.iter().for_each(|&line| self.proposals[line].ticked = false);
+                                go = 1;
+                            }
+                            let on = lines.iter().filter(|&&line| self.proposals[line].ticked).count();
+                            let state = if on == lines.len() { "selected" } else if on == 0 { "not selected" } else { "partly selected" };
+                            ui.label(RichText::new(state).small().weak());
+                        } else if ui.button("Next").on_hover_text("Go on to the next contact").clicked() {
+                            go = 1;
+                        }
+                    });
+                });
+                if go > 0 && at + 1 == total {
+                    // The last contact: back to the list, to look it over and press the step's button.
                     self.one_at_a_time = false;
                 } else {
-                    self.at = (at as i64 + go).max(0) as usize;
+                    self.at = (at as i64 + go).clamp(0, total as i64 - 1) as usize;
                 }
             } else {
                 let room = ui.ctx().content_rect().height() - 330.0 - if self.preview_set(&book.contacts).is_some() { PREVIEW_HEIGHT + 30.0 } else { 0.0 };
@@ -561,7 +641,7 @@ impl Step {
                                     ui.label(proposal.title.as_str());
                                 }
                                 let mut on = previewed == Some(line);
-                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| line_controls(ui, kind, proposal, &book.contacts, &mut edit, &mut delete, &mut on, true));
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| line_controls(ui, kind, proposal, &book.contacts, &mut edit, &mut delete, &mut on, true, true));
                                 if on != (previewed == Some(line)) {
                                     previewed = on.then_some(line);
                                 }
@@ -662,7 +742,7 @@ pub struct Wizard {
 /// choice of which contact a set is merged into, the country controls, and what would change.
 /// `reversed` is for a right-to-left row, where the first thing added sits at the right edge.
 #[allow(clippy::too_many_arguments)]
-fn line_controls(ui: &mut egui::Ui, kind: Kind, proposal: &mut Proposal, contacts: &[Contact], edit: &mut Option<usize>, delete: &mut Option<usize>, previewing: &mut bool, reversed: bool) {
+fn line_controls(ui: &mut egui::Ui, kind: Kind, proposal: &mut Proposal, contacts: &[Contact], edit: &mut Option<usize>, delete: &mut Option<usize>, previewing: &mut bool, contact_buttons: bool, reversed: bool) {
     type Part<'a> = Box<dyn FnMut(&mut egui::Ui, &mut Proposal) + 'a>;
     let mut parts: Vec<Part> = Vec::new();
     parts.push(Box::new(|ui, proposal| {
@@ -700,16 +780,18 @@ fn line_controls(ui: &mut egui::Ui, kind: Kind, proposal: &mut Proposal, contact
             preview_button(ui, previewing);
         }));
     }
-    parts.push(Box::new(|ui, proposal| {
-        if ui.small_button("Edit").on_hover_text("Open this contact in the editor, then come back here").clicked() {
-            *edit = Some(proposal.contacts[0]);
-        }
-    }));
-    parts.push(Box::new(|ui, proposal| {
-        if ui.small_button("Delete").on_hover_text("Delete this contact, after asking, then come back here").clicked() {
-            *delete = Some(proposal.contacts[0]);
-        }
-    }));
+    if contact_buttons {
+        parts.push(Box::new(|ui, proposal| {
+            if ui.small_button("Edit").on_hover_text("Open this contact in the editor, then come back here").clicked() {
+                *edit = Some(proposal.contacts[0]);
+            }
+        }));
+        parts.push(Box::new(|ui, proposal| {
+            if ui.small_button("Delete").on_hover_text("Delete this contact, after asking, then come back here").clicked() {
+                *delete = Some(proposal.contacts[0]);
+            }
+        }));
+    }
     if reversed {
         parts.reverse();
     }
@@ -844,6 +926,19 @@ pub fn choose_steps(mut steps: Vec<(Kind, bool)>, ui: &mut egui::Ui, state: &mut
         ui.label(RichText::new("Optimization Wizard").size(17.0).strong());
         ui.label(RichText::new("The wizard goes through the steps you tick, one after another. Each step shows what it would change, and you can undo the whole run at the end.").weak());
         ui.add_space(8.0);
+        ui.horizontal(|ui| {
+            let on = steps.iter().filter(|(_, ticked)| *ticked).count();
+            ui.label(RichText::new(format!("{on} of {} selected", steps.len())).small().weak());
+            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                if ui.small_button("Deselect All").on_hover_text("Untick every step").clicked() {
+                    steps.iter_mut().for_each(|(_, ticked)| *ticked = false);
+                }
+                if ui.small_button("Select All").on_hover_text("Tick every step").clicked() {
+                    steps.iter_mut().for_each(|(_, ticked)| *ticked = true);
+                }
+            });
+        });
+        ui.separator();
         for (kind, ticked) in &mut steps {
             ui.horizontal(|ui| {
                 ui.checkbox(ticked, kind.title());

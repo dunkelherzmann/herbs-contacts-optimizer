@@ -89,8 +89,9 @@ unresolved-numbers step (a desktop has no call log). On top of that:
   book* in the sidebar.
 - It reads and writes every common contact format (section 4).
 - It connects to Google, Microsoft (Outlook) and iCloud accounts, and to any CardDAV server (section 5).
-- Nothing is changed until the user saves. Before a save to a file or an account, the app keeps a backup of
-  what was there, and Restore brings it back.
+- Nothing is changed until the user saves. A file is never written over: the changes go to a copy beside it,
+  `<name> - optimized.<extension>`. Before a save to that copy or to an account, the app keeps a backup of what
+  was there, and Restore brings it back.
 
 ## 3. Window
 
@@ -316,11 +317,22 @@ In Merge Contacts each set has an "Into" dropdown to choose which contact keeps 
 others'; in Merge by Hand "Merge into" does the same for the ticked contacts. Preview, on each set in Merge
 Contacts and beside "Merge into" in Merge by Hand, shows under the list the contact the merge would make, laid
 out like the contact's panel, with every value the others add marked "+" in the accent colour; pressing it
-again hides it. A preview changes nothing. Tidy Names lists the contacts
-whose Name field repeats the middle and last names, with a "Fix by" dropdown (keep the full name and empty the
-parts, or split the Name into the three parts), and each line shows what it would become. One at a Time shows a single
-line with the contact's main details and Previous, Leave (untick and go on) and Select (tick and go on);
-after the last line the list is back for a look and the step's button.
+again hides it. A preview changes nothing. Tidy Names works on every contact, with a "Fix by" dropdown:
+joining puts the whole name in the Name field and empties the middle and last; splitting puts the whole name
+in first, middle and last. It lists every contact whose name the fix would change, showing the name fields as
+they are and what they would become. Contacts whose Name field repeats the middle and last names (a merge
+artefact; joining keeps that Name as it is) come ticked, the others unticked.
+
+One at a Time goes through every contact of the address book, not only those the step found: "Contact N of
+M", the contact's main details with Edit and Delete, and the step's lines about that contact with their tick
+boxes, or "Nothing for this step in this contact". Previous goes back, Next Found skips to the next contact the
+step found something in, Leave and Select untick or tick the contact's lines and go on, and Next goes on from a
+contact with nothing. After the last contact the list is back for a look and the step's button.
+
+Edit and Delete keep the ticks: back in the step, every line still there keeps its tick and its choices (the
+contact to merge into, a line's country code), and in the contact list the ticked contacts stay ticked. Every
+tick list has Select All and Deselect All: each step, the wizard's list of steps, and the contact list (its
+header box, and Edit → Select All and Deselect All).
 
 Country Codes lists every phone number without a country code, one line per number, with the number as it
 would become. "Country for all" sets the country, from a dropdown of countries with their codes or by typing
@@ -334,7 +346,7 @@ while a number has none. Country data comes from libphonenumber and Unicode CLDR
 
 Wizard (toolbar, or Main Menu → Tools → Optimization Wizard) first lists its steps, all ticked: Duplicates,
 Inner Duplicates, Similar Contacts, Merge Contacts, Invalid Contacts, Missing Information, Fill In Empty
-Names, Tidy Names, Capitalization, Country Codes, Simplify Numbers. Start runs the ticked ones in that order. Each is the same tick list
+Names, Tidy Names, Capitalization, Country Codes, Simplify Numbers, with Select All and Deselect All. Start runs the ticked ones in that order. Each is the same tick list
 as in the Toolbox, with "Step N of M" above it, its own button to carry it out, and Skip. A step that finds
 nothing is passed over. Cancel Wizard stops and puts every contact back as it was. After the last step the
 Summary shows the contacts before and now and what each step did; Undo All puts everything back, Done keeps
@@ -342,12 +354,15 @@ the changes.
 
 ### 6.3 Saving
 
-Save (⌘S) writes the address book back to its file in the file's own format: vCard 4.0 stays 4.0, vCard 2.1
-and 3.0 are written as 3.0, and Google CSV, Outlook CSV, Excel, LDIF, jCard and xCard each stay what they are. Before writing, the file as it was is copied to the
-app's backups folder; the ten newest backups of each file are kept. A CSV file in another layout is not
+Save (⌘S) never changes the file that was opened: it writes a copy beside it, `<name> - optimized.<extension>`
+(`Friends.vcf` becomes `Friends - optimized.vcf`), and the address book stands for that copy from then on, so
+later saves go to it. A file that already is such a copy is saved in place. The copy is in the file's own
+format: vCard 4.0 stays 4.0, vCard 2.1 and 3.0 are written as 3.0, and Google CSV, Outlook CSV, Excel, LDIF,
+jCard and xCard each stay what they are. Before a copy is written over, it is copied to the app's backups
+folder; the ten newest backups of each are kept. A CSV file in another layout is not
 overwritten: the app says so and points to Export. An address book without a file goes to Export.
 
-File → Restore Backup puts the newest backup back over the file, after asking with Cancel as the default, and
+File → Restore Backup puts the newest backup back over the copy, after asking with Cancel as the default, and
 shows its contacts again. Restoring again reaches the backup before that.
 
 Closing the window with unsaved changes asks first: Cancel, the default, or Quit Without Saving.

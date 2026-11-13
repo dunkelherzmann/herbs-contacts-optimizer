@@ -21,6 +21,35 @@ pub mod xlsx;
 
 pub use model::{Address, Contact, Photo, Remote, Typed};
 
+/// Where the changes to a contact file are saved: a copy beside it named `<name> - optimized.<extension>`,
+/// so the original stays as it was. A file that already is such a copy is saved in place.
+pub fn optimized_copy(path: &std::path::Path) -> std::path::PathBuf {
+    const MARK: &str = " - optimized";
+    let stem = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+    if stem.ends_with(MARK) {
+        return path.to_path_buf();
+    }
+    let name = match path.extension() {
+        Some(ext) => format!("{stem}{MARK}.{}", ext.to_string_lossy()),
+        None => format!("{stem}{MARK}"),
+    };
+    path.with_file_name(name)
+}
+
+#[cfg(test)]
+mod optimized_copy_tests {
+    use super::optimized_copy;
+    use std::path::Path;
+
+    #[test]
+    fn the_copy_sits_beside_the_original() {
+        assert_eq!(optimized_copy(Path::new("/a/Friends.vcf")), Path::new("/a/Friends - optimized.vcf"));
+        assert_eq!(optimized_copy(Path::new("/a/my.contacts.csv")), Path::new("/a/my.contacts - optimized.csv"));
+        assert_eq!(optimized_copy(Path::new("/a/book")), Path::new("/a/book - optimized"));
+        assert_eq!(optimized_copy(Path::new("/a/Friends - optimized.vcf")), Path::new("/a/Friends - optimized.vcf"));
+    }
+}
+
 /// The file formats the core reads, as far apart as writing them back needs.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Format {

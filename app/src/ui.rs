@@ -386,12 +386,16 @@ impl AppState {
             return;
         };
         let name = book.name.clone();
+        // The changes go to a copy beside the file, which then stands for the address book.
+        let original = path;
+        let path = hco_core::optimized_copy(&original);
+        let copy_name = path.file_name().map_or_else(|| name.clone(), |n| n.to_string_lossy().into_owned());
         let result = (|| -> std::io::Result<()> {
             if path.exists() {
                 std::fs::create_dir_all(self.backups())?;
                 let seconds = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_millis());
                 let mark = fnv(path.to_string_lossy().as_bytes());
-                std::fs::copy(&path, self.backups().join(format!("{mark:016x}-{seconds:015}-{name}")))?;
+                std::fs::copy(&path, self.backups().join(format!("{mark:016x}-{seconds:015}-{copy_name}")))?;
                 let kept = self.backups_of(&path);
                 for old in kept.iter().take(kept.len().saturating_sub(10)) {
                     std::fs::remove_file(old)?;
@@ -403,8 +407,15 @@ impl AppState {
         })();
         match result {
             Ok(()) => {
-                self.books[self.current].changed = false;
-                self.status = format!("Saved {name}. The file as it was is kept as a backup.");
+                let book = &mut self.books[self.current];
+                book.changed = false;
+                self.status = if path == original {
+                    format!("Saved {name}. The file as it was is kept as a backup.")
+                } else {
+                    format!("Saved as {copy_name}. {name} is left as it was.")
+                };
+                book.path = Some(path);
+                book.name = copy_name;
             }
             Err(error) => self.dialog = Dialog::Message { title: format!("“{name}” could not be saved"), text: error.to_string() },
         }
@@ -661,7 +672,7 @@ impl AppState {
                 *command = Some(Command::Open);
             }
             let save = ui.add_enabled(has_book, Button::new("Save"));
-            if save.on_hover_text(format!("Write this address book back to its file, keeping a backup ({})", key(ui, &SAVE))).clicked() {
+            if save.on_hover_text(format!("Save the changes as a copy beside the file, “… - optimized”, leaving the file itself as it was ({})", key(ui, &SAVE))).clicked() {
                 *command = Some(Command::Save);
             }
             let export = ui.add_enabled(has_book, Button::new("Export"));
@@ -707,7 +718,7 @@ impl AppState {
             ui.set_min_width(230.0);
             ui.menu_button("File", |ui| {
                 item(ui, command, Command::Open, true, "Open…", &key(ui, &OPEN), "Open a contacts file as an address book");
-                item(ui, command, Command::Save, has_book, "Save", &key(ui, &SAVE), "Write this address book back to its file, keeping a backup of the file as it was");
+                item(ui, command, Command::Save, has_book, "Save", &key(ui, &SAVE), "Save the changes as a copy beside the file, “… - optimized”, leaving the file itself as it was");
                 item(ui, command, Command::Restore, has_book, "Restore Backup…", "", "Bring back the file as it was before the last save, after asking");
                 ui.menu_button("Export", |ui| {
                     for format in Format::WRITABLE {
@@ -1301,15 +1312,17 @@ impl AppState {
             book.contacts.remove(index);
             book.changed = true;
             self.selected = None;
-            self.checked.clear();
+            // The ticks stay on their contacts: those below the deleted one move up a place.
+            self.checked = self.checked.iter().filter(|&&i| i != index).map(|&i| if i > index { i - 1 } else { i }).collect();
             self.status = format!("Deleted {}.", if name.is_empty() { "the contact" } else { &name });
         } else if !close {
             return Dialog::ConfirmDelete(index, back);
         }
-        // Opened from a Toolbox or wizard step: back to it, with its lines worked out anew.
+        // Opened from a Toolbox or wizard step: back to it, with its lines worked out anew and
+        // the ticks kept.
         match (back, self.books.get(self.current)) {
             (Some(mut step), Some(book)) => {
-                step.refresh(&book.contacts);
+                step.refresh_keeping(&book.contacts, delete.then_some(index));
                 Dialog::Step(*step)
             }
             _ => Dialog::None,

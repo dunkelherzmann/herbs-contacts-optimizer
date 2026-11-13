@@ -49,3 +49,7 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [x] Mac (window tests pass; built and installed)
   - [x] Linux (window tests pass; the installed Flatpak was clicked through: Merge by Hand, Preview)
   - [x] Windows (window tests pass; the `.exe` was clicked through: Merge Contacts, Preview)
+- [ ] 2026-11-13 (all platforms): Every contact file that is opened and changed is saved as a copy beside it, `<filename> - optimized.<extension>`, leaving the original as it was. (Mac: done in 0.2)
+- [ ] 2026-11-13 (all platforms): The Toolbox and the wizard can go through all contacts, one contact at a time. (Mac: done in 0.2; One at a Time now walks every contact, with Next Found to skip to the next one the step found)
+- [ ] 2026-11-13 (all platforms): Going into Edit or Delete for a contact keeps the ticks of the view it came from. (Mac: done in 0.2, for the steps and the contact list)
+- [ ] 2026-11-13 (all platforms): Every list with tick boxes has Select All and Deselect All. (Mac: done in 0.2; the wizard's list of steps was the one without them)
