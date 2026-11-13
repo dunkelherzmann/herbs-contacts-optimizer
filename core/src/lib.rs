@@ -7,6 +7,7 @@ pub mod cards;
 pub mod countries;
 mod countries_data;
 pub mod csv;
+pub mod filter;
 pub mod ldif;
 #[cfg(any(test, feature = "mock"))]
 pub mod mock;

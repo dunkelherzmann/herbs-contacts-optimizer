@@ -4,21 +4,20 @@ What `specs.md` describes and the app does not do yet, in build order.
 
 ## All platforms (built on the Mac first)
 
-1. Filter the list by text, by data and by group.
-2. A preview of the merged contact in both merge steps.
-3. Wizard: the final preview with changed contacts marked. Restore: choosing among older backups.
-4. Country Codes: remembering the last country between runs; a search box in the country dropdown.
-5. Similar contacts: names that differ by a typo.
-6. Undo (⌘Z) for changes to contacts.
-7. Formats still to build: CSV column mapping for unknown layouts, Windows `.contact`, then the read-only
+1. A preview of the merged contact in both merge steps.
+2. Wizard: the final preview with changed contacts marked. Restore: choosing among older backups.
+3. Country Codes: remembering the last country between runs; a search box in the country dropdown.
+4. Similar contacts: names that differ by a typo.
+5. Undo (⌘Z) for changes to contacts.
+6. Formats still to build: CSV column mapping for unknown layouts, Windows `.contact`, then the read-only
    ones (`.msg`, `.pst`, `.ost`, `.wab`, `.abbu`, Thunderbird's `abook.sqlite`, Android's `contacts2.db`, Nokia
    and Samsung backups). Text encodings beyond UTF-8, UTF-16 and Latin-1. A list, before exporting, of what
    the chosen format cannot hold.
-8. Accounts: Google and Microsoft, which each need an app registration in the owner's developer account.
+7. Accounts: Google and Microsoft, which each need an app registration in the owner's developer account.
    Copy and move between accounts and files. Restore for accounts (the backup file is written, nothing
    reads it back). An account's groups. Changing the app password.
-9. Pictures in HEIC and other kinds.
-10. A logging switch, and the Edit and View menus in full.
+8. Pictures in HEIC and other kinds.
+9. A logging switch, and the Edit and View menus in full.
 
 ## Not yet proven
 

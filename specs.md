@@ -98,7 +98,7 @@ One window. From left to right: the sidebar with address books, the contact list
 
 - **Main Menu** (☰), the first button of the toolbar: File, Edit, View, Tools, Accounts, Help. Every command
   is there; the macOS menu bar keeps only the app menu.
-- **Toolbar**: Main Menu, Open, Save, Export, Find Duplicates, Wizard, Toolbox, New Contact, and a search field.
+- **Toolbar**: Main Menu, Open, Save, Export, Find Duplicates, Wizard, Toolbox, New Contact, Filter, and a search field.
 - **Sidebar**: address books with contact counts; read-only ones are marked.
 - **Contact list**: name and main phone or e-mail, tick boxes for mass actions, sort and filter.
 - **Details**: the full contact; Edit switches to the editor (1.1, Contact editor).
@@ -112,6 +112,7 @@ One window. From left to right: the sidebar with address books, the contact list
 | Export | ⇧⌘E |
 | New contact | ⌘N |
 | Find | ⌘F |
+| Show or hide the filters | ⇧⌘F |
 | Restore backup | Main Menu → File → Restore Backup |
 | Optimization wizard | Main Menu → Tools → Optimization Wizard |
 | Find duplicates | ⌘D |
@@ -145,6 +146,21 @@ Edit → Edit Ticked Contacts changes all ticked contacts at once: company, depa
 country, add to a group, remove from a group, and a line added to the note. Only the fields filled in are
 applied. Delete (⌫) is about the ticked contacts when there are any, else about the selected one; it asks
 first, with Cancel as the default.
+
+Filters narrow the list down further than the search. Filter in the toolbar (or View → Show Filters, ⇧⌘F)
+opens a bar above the list with one row per filter, and a contact is shown only when it matches every row:
+
+| Filter by | Match | Value |
+|---|---|---|
+| Text | Contains, Does not contain | the text, looked for in every part of the contact (names, nickname, company, numbers, e-mail addresses, websites, addresses, dates, note, groups); case, accents and spacing don't count, and a number matches however it is spaced |
+| Data | Has, Lacks | a name, a phone number, an e-mail address, an address, a company, a website, a birthday, a note, a group, a picture; a blank value counts as lacking |
+| Group | In group, Not in group | a group the contacts of this address book are in |
+
+Add Filter adds a row, Remove takes one away, Clear Filters (also View → Clear Filters) removes them all, and
+Done hides the bar while the filters keep working. A text or group filter with nothing in it yet hides
+nothing. The toolbar button shows how many filters are at work, as "Filter (2)", and the status bar shows
+"5 of 6 contacts". The filters stay as they are when another address book is chosen. Select All ticks the
+contacts the search and the filters let through.
 
 ### 3.3 Several address books
 

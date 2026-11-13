@@ -1140,3 +1140,84 @@ fn every_format_is_exported_opened_again_and_saved_in_place() {
         assert_eq!((found, saved.len()), (format, 5), "{}", format.label());
     }
 }
+
+/// Clicks the last control with this label (filter rows repeat their labels) and lets it settle.
+fn click_last(harness: &mut Harness<'_, Option<AppState>>, label: &str) {
+    harness.query_all_by_label(label).last().unwrap_or_else(|| panic!("no {label}")).click();
+    harness.run();
+}
+
+#[test]
+fn the_list_is_filtered_by_text_data_and_group() {
+    let mut harness = window(egui::Theme::Light, |state| {
+        let mut book = sample();
+        book.contacts[1].groups = vec!["Work".into()];
+        book.contacts[2].emails.clear();
+        state.add_book(book);
+    });
+    harness.run();
+    assert!(harness.query_by_label("Filter text").is_none());
+
+    // The toolbar's Filter opens the bar with one text filter.
+    harness.get_by_role_and_label(egui::Role::Button, "Filter").click();
+    harness.run();
+    type_into(&mut harness, "Filter text", "lisbon");
+    assert_eq!(listed(&harness), vec!["Ana García"]);
+    harness.get_by_label("1 of 6 contacts");
+    harness.get_by_role_and_label(egui::Role::Button, "Filter (1)");
+
+    // Turned around: everyone without the text.
+    click_last(&mut harness, "Match: Contains");
+    click_last(&mut harness, "Does not contain");
+    assert_eq!(listed(&harness).len(), 5);
+    assert!(!listed(&harness).contains(&"Ana García".to_string()));
+
+    // A second filter, by data: lacking an e-mail address.
+    click_last(&mut harness, "Add Filter");
+    click_last(&mut harness, "Filter by: Text");
+    click_last(&mut harness, "Data");
+    click_last(&mut harness, "Data: a phone number");
+    click_last(&mut harness, "an e-mail address");
+    click_last(&mut harness, "Match: Has");
+    click_last(&mut harness, "Lacks");
+    assert_eq!(listed(&harness), vec!["Chen Wei"]);
+    picture(&mut harness, "filters.png");
+
+    // Replace both with a group filter: in Work, then outside it.
+    click_last(&mut harness, "Clear Filters");
+    assert_eq!(listed(&harness).len(), 6);
+    click_last(&mut harness, "Add Filter");
+    click_last(&mut harness, "Filter by: Text");
+    click_last(&mut harness, "Group");
+    click_last(&mut harness, "Group: Friends");
+    click_last(&mut harness, "Work");
+    assert_eq!(listed(&harness), vec!["Ana García", "Bob Stone"]);
+    click_last(&mut harness, "Match: In group");
+    click_last(&mut harness, "Not in group");
+    assert_eq!(listed(&harness).len(), 4);
+
+    // Hidden, the filters keep working; ⇧⌘F brings them back, Remove takes one away.
+    click_last(&mut harness, "Done");
+    assert!(harness.query_by_label("Remove filter 1").is_none());
+    assert_eq!(listed(&harness).len(), 4);
+    harness.key_press_modifiers(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::F);
+    harness.run();
+    click_last(&mut harness, "Remove filter 1");
+    assert_eq!(listed(&harness).len(), 6);
+    harness.get_by_label("6 contacts");
+
+    // The bar in the dark, with one filter of each kind.
+    let mut harness = window(egui::Theme::Dark, |state| {
+        use hco_core::filter::{Field, Filter, Rule};
+        state.add_book(sample());
+        state.show_filters = true;
+        state.filters = vec![
+            Filter { rule: Rule::Text("example".into()), negate: false },
+            Filter { rule: Rule::Has(Field::Address), negate: true },
+            Filter { rule: Rule::Group("Work".into()), negate: true },
+        ];
+    });
+    harness.run();
+    assert_eq!(listed(&harness).len(), 5);
+    picture(&mut harness, "filters-dark.png");
+}

@@ -69,4 +69,8 @@ macOS first, then Linux and Windows, in Rust.
   the row below.
 - Window tests: a name in a dialog is usually also in the list behind it, so pick by role
   (`get_by_role_and_label(egui::Role::CheckBox, …)`); to type, `focus()`, `run()`, then `type_text`.
+- On Windows an instant synthetic click (Master Control `click`) is lost on an item in an egui popup (a
+  combo box's list, a menu): use `drag` from the point to one pixel beside it, which holds the button long
+  enough. Ordinary buttons take the instant click. A button made with `.selected(…)` is a toggle for
+  assistive tools: `toggle` it, since `press` does nothing there.
 - The 8-point margin around the test pictures is the test harness's own frame, not the app's.

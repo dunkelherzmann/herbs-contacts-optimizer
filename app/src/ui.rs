@@ -8,6 +8,7 @@ use crate::toolbox::{self, Step, Wizard};
 use crate::{APP_NAME, AUTHOR, ICON_PNG, PROJECT_URL, TAGLINE, VERSION};
 use egui::{Align, Button, Color32, Key, KeyboardShortcut, Label, Layout, Modifiers, RichText, Sense};
 use egui_extras::{Column, TableBuilder};
+use hco_core::filter::{Field, Filter, Rule};
 use hco_core::{optimize, text::plain, Contact, Format, Typed};
 use std::collections::{BTreeSet, HashSet};
 use std::path::PathBuf;
@@ -21,6 +22,7 @@ const FIND: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::F)
 const NEW: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::N);
 const SELECT_ALL: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::A);
 const DUPLICATES: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::D);
+const FILTER: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND.plus(Modifiers::SHIFT), Key::F);
 
 /// One opened file: an address book in the sidebar.
 pub struct Book {
@@ -105,6 +107,8 @@ enum Command {
     Export(Format),
     CloseBook,
     Find,
+    ToggleFilters,
+    ClearFilters,
     FindDuplicates,
     SelectAll,
     DeselectAll,
@@ -169,6 +173,10 @@ pub struct AppState {
     /// Where a drag over the sidebar began.
     drag_from: Option<usize>,
     pub search: String,
+    /// The list's filters; a contact is shown when every one lets it through.
+    pub filters: Vec<Filter>,
+    /// Whether the filter bar above the list is open.
+    pub show_filters: bool,
     /// Where the app keeps its own files (backups).
     pub data_dir: PathBuf,
     quitting: bool,
@@ -203,6 +211,8 @@ impl AppState {
             books_have_focus: false,
             drag_from: None,
             search: String::new(),
+            filters: Vec::new(),
+            show_filters: false,
             data_dir: default_data_dir(),
             quitting: false,
             appearance: Appearance::System,
@@ -491,6 +501,13 @@ impl AppState {
                 self.status.clear();
             }
             Command::Find => self.focus_search = true,
+            Command::ToggleFilters => {
+                self.show_filters = !self.show_filters;
+                if self.show_filters && self.filters.is_empty() {
+                    self.filters.push(Filter { rule: Rule::Text(String::new()), negate: false });
+                }
+            }
+            Command::ClearFilters => self.filters.clear(),
             Command::FindDuplicates => self.find_duplicates(),
             Command::SelectAll if self.books_have_focus => self.picked_books = (0..self.books.len()).collect(),
             Command::SelectAll => self.checked = self.shown().into_iter().collect(),
@@ -573,8 +590,9 @@ impl AppState {
             self.picked_books.insert(self.current);
         }
         let mut command = None;
+        // ⇧⌘F comes before ⌘F: a shortcut without Shift also takes the key with Shift.
         ui.input_mut(|input| {
-            for (shortcut, c) in [(EXPORT, Command::Export(Format::VCard3)), (OPEN, Command::Open), (SAVE, Command::Save), (FIND, Command::Find), (DUPLICATES, Command::FindDuplicates), (NEW, Command::NewContact)] {
+            for (shortcut, c) in [(EXPORT, Command::Export(Format::VCard3)), (OPEN, Command::Open), (SAVE, Command::Save), (FILTER, Command::ToggleFilters), (FIND, Command::Find), (DUPLICATES, Command::FindDuplicates), (NEW, Command::NewContact)] {
                 if input.consume_shortcut(&shortcut) {
                     command = Some(c);
                 }
@@ -619,6 +637,9 @@ impl AppState {
             if self.books.is_empty() {
                 self.welcome(ui, &mut command);
             } else {
+                if self.show_filters {
+                    self.filter_bar(ui);
+                }
                 self.contact_list(ui);
             }
         });
@@ -668,6 +689,12 @@ impl AppState {
                     search.request_focus();
                 }
                 search.on_hover_text(format!("Show only contacts with this text ({})", key(ui, &FIND)));
+                let active = self.filters.iter().filter(|f| f.is_active()).count();
+                let title = if active == 0 { "Filter".to_string() } else { format!("Filter ({active})") };
+                let filter = ui.add_enabled(has_book, Button::new(title).selected(self.show_filters));
+                if filter.on_hover_text(format!("Show or hide the filters: by text, by data and by group ({})", key(ui, &FILTER))).clicked() {
+                    *command = Some(Command::ToggleFilters);
+                }
             });
         });
     }
@@ -707,6 +734,10 @@ impl AppState {
                 item(ui, command, Command::DeselectAll, !self.checked.is_empty(), "Deselect All", "Esc", "Untick every contact");
             });
             ui.menu_button("View", |ui| {
+                let title = if self.show_filters { "Hide Filters" } else { "Show Filters" };
+                item(ui, command, Command::ToggleFilters, has_book, title, &key(ui, &FILTER), "Show or hide the filters above the list: by text, by data and by group");
+                item(ui, command, Command::ClearFilters, !self.filters.is_empty(), "Clear Filters", "", "Remove every filter and show all contacts again");
+                ui.separator();
                 ui.menu_button("Appearance", |ui| {
                     for appearance in [Appearance::System, Appearance::Light, Appearance::Dark] {
                         let button = Button::new(appearance.label()).selected(self.appearance == appearance);
@@ -882,6 +913,7 @@ impl AppState {
             .contacts
             .iter()
             .enumerate()
+            .filter(|(_, c)| hco_core::filter::matches_all(&self.filters, c))
             .filter(|(_, c)| {
                 needle.is_empty()
                     || plain(&c.name()).contains(&needle)
@@ -906,6 +938,42 @@ impl AppState {
         shown
     }
 
+    /// The filters above the list, one row each, with a way to add, remove and clear them.
+    fn filter_bar(&mut self, ui: &mut egui::Ui) {
+        let groups = self.books.get(self.current).map(|book| hco_core::filter::groups(&book.contacts)).unwrap_or_default();
+        let mut remove = None;
+        let palette = theme::of(ui);
+        egui::Frame::new().fill(palette.bar).corner_radius(8.0).inner_margin(egui::Margin::same(8)).show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            for (at, filter) in self.filters.iter_mut().enumerate() {
+                ui.horizontal(|ui| {
+                    ui.push_id(at, |ui| filter_row(ui, filter, &groups));
+                    let button = ui.add(Button::new("Remove"));
+                    button.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, format!("Remove filter {}", at + 1)));
+                    if button.on_hover_text("Take this filter away").clicked() {
+                        remove = Some(at);
+                    }
+                });
+            }
+            if let Some(at) = remove {
+                self.filters.remove(at);
+            }
+            ui.horizontal(|ui| {
+                if ui.add(Button::new("Add Filter")).on_hover_text("Add another filter; a contact is shown only when it matches every one").clicked() {
+                    self.filters.push(Filter { rule: Rule::Text(String::new()), negate: false });
+                }
+                let clear = ui.add_enabled(!self.filters.is_empty(), Button::new("Clear Filters"));
+                if clear.on_hover_text("Remove every filter and show all contacts again").clicked() {
+                    self.filters.clear();
+                }
+                if ui.add(Button::new("Done")).on_hover_text(format!("Hide the filters; they keep working ({})", ui.ctx().format_shortcut(&FILTER))).clicked() {
+                    self.show_filters = false;
+                }
+            });
+        });
+        ui.add_space(6.0);
+    }
+
     fn selected_contact(&self) -> Option<&Contact> {
         self.books.get(self.current)?.contacts.get(self.selected?)
     }
@@ -916,7 +984,7 @@ impl AppState {
         if shown.is_empty() {
             ui.vertical_centered(|ui| {
                 ui.add_space(60.0);
-                ui.label(RichText::new(if book.contacts.is_empty() { "This address book is empty" } else { "No contact matches the search" }).weak());
+                ui.label(RichText::new(if book.contacts.is_empty() { "This address book is empty" } else { "No contact matches the search and filters" }).weak());
             });
             return;
         }
@@ -1363,5 +1431,84 @@ fn typed_section(ui: &mut egui::Ui, title: &str, values: &[Typed]) {
     section(ui, title);
     for value in values {
         row(ui, &value.kind, &value.value);
+    }
+}
+
+/// The width of a filter's last box, so the Remove buttons line up.
+const VALUE_WIDTH: f32 = 220.0;
+
+/// The three kinds of filter, as the first box of a filter row offers them.
+const KINDS: [&str; 3] = ["Text", "Data", "Group"];
+
+fn kind_of(rule: &Rule) -> usize {
+    match rule {
+        Rule::Text(_) => 0,
+        Rule::Has(_) => 1,
+        Rule::Group(_) => 2,
+    }
+}
+
+/// One filter: what it looks at, which way round, and its text, kind of data or group.
+fn filter_row(ui: &mut egui::Ui, filter: &mut Filter, groups: &[String]) {
+    let mut kind = kind_of(&filter.rule);
+    let combo = egui::ComboBox::from_id_salt("kind").selected_text(KINDS[kind]).width(80.0).show_ui(ui, |ui| {
+        for (at, label) in KINDS.iter().enumerate() {
+            ui.selectable_value(&mut kind, at, *label);
+        }
+    });
+    combo.response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, format!("Filter by: {}", KINDS[kind])));
+    combo.response.on_hover_text("Filter by a text, by a kind of data, or by a group");
+    if kind != kind_of(&filter.rule) {
+        filter.rule = match kind {
+            0 => Rule::Text(String::new()),
+            1 => Rule::Has(Field::Phone),
+            _ => Rule::Group(groups.first().cloned().unwrap_or_default()),
+        };
+    }
+
+    let (yes, no) = match filter.rule {
+        Rule::Text(_) => ("Contains", "Does not contain"),
+        Rule::Has(_) => ("Has", "Lacks"),
+        Rule::Group(_) => ("In group", "Not in group"),
+    };
+    let way = |negate: bool| if negate { no } else { yes };
+    let combo = egui::ComboBox::from_id_salt("way").selected_text(way(filter.negate)).width(150.0).show_ui(ui, |ui| {
+        ui.selectable_value(&mut filter.negate, false, yes);
+        ui.selectable_value(&mut filter.negate, true, no);
+    });
+    let now = way(filter.negate);
+    combo.response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, format!("Match: {now}")));
+    combo.response.on_hover_text("Show the contacts that match, or the ones that do not");
+
+    match &mut filter.rule {
+        Rule::Text(text) => {
+            let field = ui.add(egui::TextEdit::singleline(text).hint_text("Text").desired_width(VALUE_WIDTH));
+            field.widget_info(|| egui::WidgetInfo::labeled(egui::Role::TextInput, true, "Filter text"));
+            field.on_hover_text("Looked for in every part of the contact: names, numbers, addresses, notes, groups");
+        }
+        Rule::Has(field) => {
+            let combo = egui::ComboBox::from_id_salt("field").selected_text(field.label()).width(VALUE_WIDTH).show_ui(ui, |ui| {
+                for f in Field::ALL {
+                    ui.selectable_value(field, f, f.label());
+                }
+            });
+            let now = field.label();
+            combo.response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, format!("Data: {now}")));
+            combo.response.on_hover_text("The kind of data the contact has or lacks");
+        }
+        Rule::Group(group) => {
+            if groups.is_empty() {
+                ui.add_sized([VALUE_WIDTH, 20.0], Label::new(RichText::new("No contact here is in a group").weak()));
+            } else {
+                let shown = if group.is_empty() { "Choose a group" } else { group.as_str() }.to_string();
+                let combo = egui::ComboBox::from_id_salt("group").selected_text(shown.as_str()).width(VALUE_WIDTH).show_ui(ui, |ui| {
+                    for g in groups {
+                        ui.selectable_value(group, g.clone(), g);
+                    }
+                });
+                combo.response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, format!("Group: {shown}")));
+                combo.response.on_hover_text("The group the contact is in, or outside of");
+            }
+        }
     }
 }
