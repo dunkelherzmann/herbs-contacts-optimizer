@@ -86,11 +86,52 @@ impl Contact {
         self.middle.clear();
         self.last.clear();
     }
+
+    /// What Tidy Names would make of this contact's name, as (first, middle, last), or None when the
+    /// fix changes nothing. Joining puts the whole name in the Name field and empties the parts (a
+    /// Name field that already repeats them keeps its text); splitting takes the whole name, joined
+    /// first if it is spread over the fields, and splits it into the three parts.
+    pub fn tidied_name(&self, split_it: bool) -> Option<(String, String, String)> {
+        let full = if self.has_redundant_name() { self.first.trim().to_string() } else { flatten(&self.first, &self.middle, &self.last) };
+        let parts = if split_it { split(&full) } else { (full, String::new(), String::new()) };
+        let now = (self.first.trim(), self.middle.trim(), self.last.trim());
+        (now != (parts.0.as_str(), parts.1.as_str(), parts.2.as_str()) && !parts.0.is_empty()).then_some(parts)
+    }
+
+    /// Applies [`Contact::tidied_name`]; returns false when nothing changed.
+    pub fn tidy_name(&mut self, split_it: bool) -> bool {
+        match self.tidied_name(split_it) {
+            Some((first, middle, last)) => {
+                (self.first, self.middle, self.last) = (first, middle, last);
+                true
+            }
+            None => false,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn tidying_works_on_any_name() {
+        let named = |first: &str, middle: &str, last: &str| Contact { first: first.into(), middle: middle.into(), last: last.into(), ..Contact::default() };
+        let parts = |a: &str, b: &str, c: &str| Some((a.to_string(), b.to_string(), c.to_string()));
+        // Joining: a healthy contact's parts go into the Name field; an artefact keeps its Name.
+        assert_eq!(named("Grace", "", "Hopper").tidied_name(false), parts("Grace Hopper", "", ""));
+        assert_eq!(named("Allan Michael Turing", "Michael", "Turing").tidied_name(false), parts("Allan Michael Turing", "", ""));
+        assert_eq!(named("Grace Hopper", "", "").tidied_name(false), None);
+        // Splitting: the whole name, joined first when it is spread over the fields.
+        assert_eq!(named("Grace Hopper", "", "").tidied_name(true), parts("Grace", "", "Hopper"));
+        assert_eq!(named("Mary Ann", "", "Smith").tidied_name(true), parts("Mary", "Ann", "Smith"));
+        assert_eq!(named("Allan Michael Turing", "Michael", "Turing").tidied_name(true), parts("Allan", "Michael", "Turing"));
+        assert_eq!(named("Grace", "", "Hopper").tidied_name(true), None);
+        assert_eq!(named("Cher", "", "").tidied_name(true), None);
+        assert_eq!(named("", "", "").tidied_name(false), None);
+        let mut c = named("Mary Ann", "", "Smith");
+        assert!(c.tidy_name(false) && c.first == "Mary Ann Smith" && c.last.is_empty());
+    }
 
     #[test]
     fn flatten_joins_the_parts() {

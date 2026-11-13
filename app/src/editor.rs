@@ -165,7 +165,7 @@ impl Editor {
         }
         match (back, state.books.get(state.current)) {
             (Some(mut step), Some(book)) => {
-                step.refresh(&book.contacts);
+                step.refresh_keeping(&book.contacts, None);
                 Dialog::Step(*step)
             }
             _ => Dialog::None,

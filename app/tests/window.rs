@@ -345,33 +345,38 @@ fn merged_book() -> Book {
 }
 
 #[test]
-fn tidy_names_fixes_only_the_redundant_contacts() {
+fn tidy_names_works_on_every_contact() {
     use herbs_contacts_optimizer::toolbox::Kind;
 
-    // The healthy contact is left out; keeping the full name empties the repeated parts.
+    // Joining lists both contacts; only the merge artefact comes ticked.
     let mut harness = window(egui::Theme::Light, |state| {
         state.add_book(merged_book());
         state.open_step(Kind::TidyNames);
     });
     harness.run();
     picture(&mut harness, "step-tidy-names.png");
-    harness.get_by_label("1 of 1 selected");
-    harness.get_by_label("Fix 1 Contact").click();
+    harness.get_by_label("1 of 2 selected");
+    harness.get_by_label("→ “Grace Hopper”");
+    harness.get_by_label("Select All").click();
+    harness.run();
+    harness.get_by_label("Fix 2 Contacts").click();
     harness.run();
     let c = &contacts(&harness)[0];
     assert_eq!((c.first.as_str(), c.middle.as_str(), c.last.as_str()), ("Allan Michael Turing", "", ""));
-    assert_eq!(contacts(&harness)[1].first, "Grace");
+    let c = &contacts(&harness)[1];
+    assert_eq!((c.first.as_str(), c.middle.as_str(), c.last.as_str()), ("Grace Hopper", "", ""));
 
-    // Splitting the Name field is the other fix.
+    // Splitting: Grace Hopper's name is already in parts, so only the artefact is left.
     let mut harness = window(egui::Theme::Light, |state| {
         state.add_book(merged_book());
         state.open_step(Kind::TidyNames);
     });
     harness.run();
-    harness.get_by_label("Fix by: Keeping the full name").click();
+    harness.get_by_label("Fix by: Joining the whole name into the Name field").click();
     harness.run();
     harness.get_by_label("Splitting the Name into parts").click();
     harness.run();
+    harness.get_by_label("1 of 1 selected");
     harness.get_by_label("Fix 1 Contact").click();
     harness.run();
     let c = &contacts(&harness)[0];
@@ -396,7 +401,7 @@ fn scratch(name: &str) -> std::path::PathBuf {
 }
 
 #[test]
-fn saving_keeps_a_backup_and_restore_brings_it_back() {
+fn saving_writes_an_optimized_copy_and_restore_brings_it_back() {
     let dir = scratch("save");
     let file = dir.join("People.vcf");
     let original = "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Bob Stone\r\nTEL:555 0100\r\nEND:VCARD\r\nBEGIN:VCARD\r\nVERSION:4.0\r\nFN:bob stone\r\nTEL:555-0100\r\nEND:VCARD\r\n";
@@ -412,30 +417,46 @@ fn saving_keeps_a_backup_and_restore_brings_it_back() {
     harness.run();
     assert!(harness.state().as_ref().unwrap().books[0].changed);
 
+    // Save writes a copy beside the file and leaves the file itself alone.
     harness.state_mut().as_mut().unwrap().save();
     harness.run();
-    let saved = std::fs::read_to_string(&file).unwrap();
+    let copy = dir.join("People - optimized.vcf");
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), original);
+    let saved = std::fs::read_to_string(&copy).unwrap();
     assert!(saved.contains("VERSION:4.0"), "a vCard 4.0 file stays 4.0");
     assert_eq!(hco_core::vcard::parse(&saved).len(), 1);
-    assert!(!harness.state().as_ref().unwrap().books[0].changed);
+    let book = &harness.state().as_ref().unwrap().books[0];
+    assert!(!book.changed);
+    assert_eq!((book.name.as_str(), book.path.as_deref()), ("People - optimized.vcf", Some(copy.as_path())));
+    harness.get_by_label("Saved as People - optimized.vcf. People.vcf is left as it was.");
+    assert!(!dir.join("data/backups").exists(), "a new copy has nothing to back up");
+
+    // Saving again goes to the copy, which is backed up first.
+    harness.state_mut().as_mut().unwrap().books[0].contacts.push(Contact { first: "Ana".into(), ..Contact::default() });
+    harness.state_mut().as_mut().unwrap().save();
+    harness.run();
+    let twice = std::fs::read_to_string(&copy).unwrap();
+    assert_eq!(hco_core::vcard::parse(&twice).len(), 2);
     let backups: Vec<_> = std::fs::read_dir(dir.join("data/backups")).unwrap().flatten().collect();
     assert_eq!(backups.len(), 1);
-    assert_eq!(std::fs::read_to_string(backups[0].path()).unwrap(), original);
-    assert!(!dir.join("People.saving").exists());
+    assert_eq!(std::fs::read_to_string(backups[0].path()).unwrap(), saved);
+    assert!(!dir.join("People - optimized.saving").exists());
+    assert_eq!(std::fs::read_dir(&dir).unwrap().flatten().filter(|e| e.path().is_file()).count(), 2, "the file and its copy");
 
     harness.state_mut().as_mut().unwrap().restore_backup();
     harness.run();
     harness.get_by_label("Bring back the backup?");
     harness.get_by_label("Cancel").click();
     harness.run();
-    assert_eq!(std::fs::read_to_string(&file).unwrap(), saved);
+    assert_eq!(std::fs::read_to_string(&copy).unwrap(), twice);
 
     harness.state_mut().as_mut().unwrap().restore_backup();
     harness.run();
     harness.get_by_label("Restore").click();
     harness.run();
+    assert_eq!(std::fs::read_to_string(&copy).unwrap(), saved);
+    assert_eq!(contacts(&harness).len(), 1);
     assert_eq!(std::fs::read_to_string(&file).unwrap(), original);
-    assert_eq!(contacts(&harness).len(), 2);
 
     harness.state_mut().as_mut().unwrap().restore_backup();
     harness.run();
@@ -962,31 +983,100 @@ fn the_contact_to_merge_into_can_be_chosen() {
 }
 
 #[test]
-fn a_step_can_be_gone_through_one_line_at_a_time() {
+fn a_step_can_go_through_every_contact_one_at_a_time() {
     use herbs_contacts_optimizer::toolbox::Kind;
+    // Capitalization finds two of the five contacts; One at a Time shows all five.
     let mut harness = step(Kind::Capitalization);
     harness.get_by_label("One at a Time").click();
     harness.run();
-    harness.get_by_label("LINE 1 OF 2");
+    harness.get_by_label("CONTACT 1 OF 5");
     harness.get_by_label_contains("+34 (600) 111-222, +34600111222, ana@example.org");
     picture(&mut harness, "step-one-at-a-time.png");
     harness.get_by_label("Leave").click();
     harness.run();
-    harness.get_by_label("LINE 2 OF 2");
+    harness.get_by_label("CONTACT 2 OF 5");
     harness.get_by_label("Previous").click();
     harness.run();
-    harness.get_by_label("LINE 1 OF 2");
+    harness.get_by_label("CONTACT 1 OF 5");
     harness.get_by_label("not selected");
     harness.get_by_label("Leave").click();
     harness.run();
     harness.get_by_label("Select").click();
     harness.run();
-    // After the last line the list is back, with the choices made.
+    // A contact the step has nothing for is shown too, and Next goes on.
+    harness.get_by_label("CONTACT 3 OF 5");
+    harness.get_by_label("Nothing for this step in this contact.");
+    picture(&mut harness, "step-one-at-a-time-nothing.png");
+    assert!(harness.query_by_label("Select").is_none());
+    for _ in 0..3 {
+        harness.get_by_label("Next").click();
+        harness.run();
+    }
+    // After the last contact the list is back, with the choices made.
     harness.get_by_label("1 of 2 selected");
     harness.get_by_label("Fix 1 Contact").click();
     harness.run();
     assert_eq!(contacts(&harness)[0].display_name, "ANA GARCÍA");
     assert_eq!(contacts(&harness)[1].display_name, "Bob Stone");
+
+    // Next Found skips to the next contact the step found something in.
+    let mut harness = step(Kind::Invalid);
+    harness.get_by_label("One at a Time").click();
+    harness.run();
+    harness.get_by_label("Next Found").click();
+    harness.run();
+    harness.get_by_label("CONTACT 5 OF 5");
+    harness.get_by_role_and_label(egui::Role::CheckBox, "Broken");
+}
+
+#[test]
+fn edit_and_delete_keep_the_ticks() {
+    use herbs_contacts_optimizer::toolbox::Kind;
+    let mut harness = window(egui::Theme::Light, |state| {
+        state.add_book(messy());
+        state.checked.insert(4);
+        state.open_step(Kind::ManualMerging);
+    });
+    harness.run();
+    harness.get_by_role_and_label(egui::Role::CheckBox, "Stone Bob").click();
+    harness.run();
+    harness.get_by_role_and_label(egui::Role::CheckBox, "Broken").click();
+    harness.run();
+    harness.get_by_label("2 of 5 selected");
+
+    // Deleting another contact: the ticks stay on their contacts, in the step and in the list.
+    harness.query_all_by_label("Delete").next().unwrap().click();
+    harness.run();
+    harness.get_by_label("Delete Contact").click();
+    harness.run();
+    harness.get_by_label("2 of 4 selected");
+    harness.get_by_label("Merge into: Stone Bob");
+    let state = harness.state().as_ref().unwrap();
+    assert_eq!(state.checked.iter().copied().collect::<Vec<_>>(), [3], "Broken moved up a place and stays ticked");
+
+    // Editing a contact and saving it comes back with the same ticks.
+    harness.query_all_by_label("Edit").nth(1).unwrap().click();
+    harness.run();
+    harness.get_by_label("Save Contact").click();
+    harness.run();
+    harness.get_by_label("2 of 4 selected");
+    harness.get_by_label("Merge into: Stone Bob");
+}
+
+#[test]
+fn the_wizard_steps_can_all_be_ticked_or_unticked() {
+    let mut harness = window(egui::Theme::Light, |state| {
+        state.add_book(messy());
+        state.open_wizard();
+    });
+    harness.run();
+    harness.get_by_label("11 of 11 selected");
+    harness.get_by_label("Deselect All").click();
+    harness.run();
+    harness.get_by_label("0 of 11 selected");
+    harness.get_by_label("Select All").click();
+    harness.run();
+    harness.get_by_label("11 of 11 selected");
 }
 
 #[test]
@@ -1136,7 +1226,7 @@ fn every_format_is_exported_opened_again_and_saved_in_place() {
         again.state_mut().as_mut().unwrap().books[0].contacts.remove(5);
         again.state_mut().as_mut().unwrap().save();
         again.run();
-        let (found, saved) = hco_core::read(&std::fs::read(&file).unwrap()).unwrap();
+        let (found, saved) = hco_core::read(&std::fs::read(hco_core::optimized_copy(&file)).unwrap()).unwrap();
         assert_eq!((found, saved.len()), (format, 5), "{}", format.label());
     }
 }
