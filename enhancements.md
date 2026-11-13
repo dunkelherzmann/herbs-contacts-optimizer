@@ -41,7 +41,7 @@ Requests in the order received. `- [x]` once shipped, with the version.
 - [x] 2026-11-11: Publish the repository. Public since 2026-11-11 at https://github.com/dunkelherzmann/herbs-contacts-optimizer, as version 0.2.
 - [x] 2026-11-12: Publish the builds as a release. Release 0.2.5 (tag `v0.2.5`), built on each system from the tagged commit: the Mac app as a zip, the Linux Flatpak bundle and the Windows `.exe` as a zip, with checksums. Each passed its self-check. First published as a pre-release, then made a full release marked Latest the same day, so the repository's front page shows it.
 - [x] 2026-11-12: Plain wording in the spec. A pass with the humanizer skill over the text files: four long dashes in `specs.md` (Tidy Names) became colons and brackets. The rest already read plainly.
-- [ ] 2026-11-12 (all platforms): Filter the contact list by text (contains or not), by data (has or lacks) and by group (in or outside it). On the local branch `feat/list-filters` (0.2.9), not yet merged.
-  - [ ] Mac (window tests pass; built and installed)
-  - [ ] Linux (window tests pass; the installed Flatpak was clicked through: text, data, the View menu, Clear Filters)
-  - [ ] Windows (window tests pass; the `.exe` was clicked through: text, group, Remove, Ctrl+Shift+F)
+- [x] 2026-11-12 (all platforms): Filter the contact list by text (contains or not), by data (has or lacks) and by group (in or outside it). Done in 0.2, PR #11.
+  - [x] Mac (window tests pass; built and installed)
+  - [x] Linux (window tests pass; the installed Flatpak was clicked through: text, data, the View menu, Clear Filters)
+  - [x] Windows (window tests pass; the `.exe` was clicked through: text, group, Remove, Ctrl+Shift+F)
