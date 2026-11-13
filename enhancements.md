@@ -49,19 +49,19 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [x] Mac (window tests pass; built and installed)
   - [x] Linux (window tests pass; the installed Flatpak was clicked through: Merge by Hand, Preview)
   - [x] Windows (window tests pass; the `.exe` was clicked through: Merge Contacts, Preview)
-- [x] 2026-11-13 (all platforms): Every contact file that is opened and changed is saved as a copy beside it, `<filename> - optimized.<extension>`, leaving the original as it was. Done in 0.2.
+- [x] 2026-11-13 (all platforms): Every contact file that is opened and changed is saved as a copy beside it, `<filename> - optimized.<extension>`, leaving the original as it was. Done in 0.2, PR #13.
   - [x] Mac (window tests pass; built and installed)
   - [x] Linux (window tests pass; saved in the installed Flatpak: the copy was written, the original unchanged)
   - [x] Windows (window tests pass; saved in the `.exe`: the copy was written and shown in the sidebar, the original unchanged)
-- [x] 2026-11-13 (all platforms): The Toolbox and the wizard can go through all contacts, one contact at a time. Done in 0.2: One at a Time walks every contact, with Next Found to skip to the next one the step found.
+- [x] 2026-11-13 (all platforms): The Toolbox and the wizard can go through all contacts, one contact at a time. Done in 0.2, PR #13: One at a Time walks every contact, with Next Found to skip to the next one the step found.
   - [x] Mac (window tests pass)
   - [x] Linux (window tests pass)
   - [x] Windows (window tests pass; gone through in the `.exe` with Tidy Names, a contact with nothing shown as such)
-- [x] 2026-11-13 (all platforms): Going into Edit or Delete for a contact keeps the ticks of the view it came from. Done in 0.2, for the steps and the contact list.
+- [x] 2026-11-13 (all platforms): Going into Edit or Delete for a contact keeps the ticks of the view it came from. Done in 0.2, PR #13, for the steps and the contact list.
   - [x] Mac (window tests pass)
   - [x] Linux (window tests pass; in the installed Flatpak two ticks stayed after deleting a third contact from Delete Contacts)
   - [x] Windows (window tests pass)
-- [x] 2026-11-13 (all platforms): Every list with tick boxes has Select All and Deselect All. Done in 0.2; the wizard's list of steps was the one without them.
+- [x] 2026-11-13 (all platforms): Every list with tick boxes has Select All and Deselect All. Done in 0.2, PR #13; the wizard's list of steps was the one without them.
   - [x] Mac (window tests pass)
   - [x] Linux (window tests pass)
   - [x] Windows (window tests pass)
