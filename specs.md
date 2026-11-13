@@ -313,7 +313,10 @@ afterwards.
 Every line of a step has Edit and Delete for its contact. Edit opens the editor and comes back to the step;
 Delete asks first, with Cancel as the default, and comes back too. The step then works out its lines anew.
 In Merge Contacts each set has an "Into" dropdown to choose which contact keeps its data and gains the
-others'; in Merge by Hand "Merge into" does the same for the ticked contacts. Tidy Names lists the contacts
+others'; in Merge by Hand "Merge into" does the same for the ticked contacts. Preview, on each set in Merge
+Contacts and beside "Merge into" in Merge by Hand, shows under the list the contact the merge would make, laid
+out like the contact's panel, with every value the others add marked "+" in the accent colour; pressing it
+again hides it. A preview changes nothing. Tidy Names lists the contacts
 whose Name field repeats the middle and last names, with a "Fix by" dropdown (keep the full name and empty the
 parts, or split the Name into the three parts), and each line shows what it would become. One at a Time shows a single
 line with the contact's main details and Previous, Leave (untick and go on) and Select (tick and go on);

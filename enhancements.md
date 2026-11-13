@@ -45,3 +45,7 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [x] Mac (window tests pass; built and installed)
   - [x] Linux (window tests pass; the installed Flatpak was clicked through: text, data, the View menu, Clear Filters)
   - [x] Windows (window tests pass; the `.exe` was clicked through: text, group, Remove, Ctrl+Shift+F)
+- [x] 2026-11-13 (all platforms): A preview of the merged contact in both merge steps (Merge Contacts and Merge by Hand), marking what the other contacts add. Done in 0.2, PR #12.
+  - [x] Mac (window tests pass; built and installed)
+  - [x] Linux (window tests pass; the installed Flatpak was clicked through: Merge by Hand, Preview)
+  - [x] Windows (window tests pass; the `.exe` was clicked through: Merge Contacts, Preview)
