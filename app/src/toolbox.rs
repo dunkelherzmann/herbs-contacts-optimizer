@@ -137,6 +137,9 @@ pub struct Step {
     pub at: usize,
     /// Merge by Hand: the contact the others are merged into; the first ticked one when not set.
     pub target: Option<usize>,
+    /// The merged contact shown under the list: in Merge Contacts the line it is for, in Merge by
+    /// Hand any value (it shows the ticked contacts merged).
+    pub preview: Option<usize>,
     /// Set when the step is part of a wizard run.
     pub wizard: Option<Wizard>,
 }
@@ -157,7 +160,7 @@ fn shown_name(c: &Contact) -> String {
 
 impl Step {
     pub fn new(kind: Kind, contacts: &[Contact]) -> Self {
-        let mut step = Step { kind, proposals: Vec::new(), pattern: String::new(), replacement: String::new(), data: DataType::Note, country: None, code: String::new(), split_names: false, one_at_a_time: false, at: 0, target: None, wizard: None };
+        let mut step = Step { kind, proposals: Vec::new(), pattern: String::new(), replacement: String::new(), data: DataType::Note, country: None, code: String::new(), split_names: false, one_at_a_time: false, at: 0, target: None, preview: None, wizard: None };
         step.refresh(contacts);
         step
     }
@@ -252,6 +255,23 @@ impl Step {
             Kind::Missing => false,
             _ => self.ticked() > 0,
         }
+    }
+
+    /// The contacts the preview merges, the one they go into first; None when no preview is shown.
+    fn preview_set(&self, contacts: &[Contact]) -> Option<Vec<usize>> {
+        self.preview?;
+        let set = match self.kind {
+            Kind::Merging => self.proposals.get(self.preview?)?.contacts.clone(),
+            Kind::ManualMerging => {
+                let mut set: Vec<usize> = self.proposals.iter().filter(|p| p.ticked).map(|p| p.contacts[0]).collect();
+                if let Some(at) = self.target.and_then(|target| set.iter().position(|&index| index == target)) {
+                    set.swap(0, at);
+                }
+                set
+            }
+            _ => return None,
+        };
+        (set.len() >= 2 && set.iter().all(|&index| index < contacts.len())).then_some(set)
     }
 
     fn button(&self) -> String {
@@ -466,6 +486,10 @@ impl Step {
                     });
                     combo.response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, format!("Merge into: {name}")));
                     combo.response.on_hover_text("The contact that keeps its data and gains what the others have");
+                    let mut on = self.preview.is_some();
+                    if preview_button(ui, &mut on) {
+                        self.preview = on.then_some(0);
+                    }
                 });
                 self.target = Some(target);
             }
@@ -478,7 +502,11 @@ impl Step {
                 ui.add_space(4.0);
                 ui.label(RichText::new(format!("LINE {} OF {len}", at + 1)).small().weak());
                 ui.label(RichText::new(proposal.title.as_str()).size(16.0).strong());
-                ui.horizontal(|ui| line_controls(ui, kind, proposal, &book.contacts, &mut edit, &mut delete, false));
+                let mut on = self.preview == Some(at);
+                ui.horizontal(|ui| line_controls(ui, kind, proposal, &book.contacts, &mut edit, &mut delete, &mut on, false));
+                if on != (self.preview == Some(at)) {
+                    self.preview = on.then_some(at);
+                }
                 ui.add_space(4.0);
                 for &index in &proposal.contacts {
                     let c = &book.contacts[index];
@@ -510,7 +538,9 @@ impl Step {
                     self.at = (at as i64 + go).max(0) as usize;
                 }
             } else {
-                let height = (len.max(2) as f32 * 32.0).min((ui.ctx().content_rect().height() - 330.0).max(120.0));
+                let room = ui.ctx().content_rect().height() - 330.0 - if self.preview_set(&book.contacts).is_some() { PREVIEW_HEIGHT + 30.0 } else { 0.0 };
+                let height = (len.max(2) as f32 * 32.0).min(room.max(120.0));
+                let mut previewed = self.preview;
                 list(ui, height, |ui| {
                     if self.proposals.is_empty() {
                         ui.add_space(14.0);
@@ -530,11 +560,19 @@ impl Step {
                                 } else {
                                     ui.label(proposal.title.as_str());
                                 }
-                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| line_controls(ui, kind, proposal, &book.contacts, &mut edit, &mut delete, true));
+                                let mut on = previewed == Some(line);
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| line_controls(ui, kind, proposal, &book.contacts, &mut edit, &mut delete, &mut on, true));
+                                if on != (previewed == Some(line)) {
+                                    previewed = on.then_some(line);
+                                }
                             });
                         });
                     }
                 });
+                self.preview = previewed;
+            }
+            if let Some(set) = self.preview_set(&book.contacts) {
+                merged_preview(ui, &book.contacts, &set);
             }
             ui.separator();
             ui.add_space(6.0);
@@ -623,7 +661,8 @@ pub struct Wizard {
 /// What every line of a step carries besides its tick box: Edit and Delete for its contact, the
 /// choice of which contact a set is merged into, the country controls, and what would change.
 /// `reversed` is for a right-to-left row, where the first thing added sits at the right edge.
-fn line_controls(ui: &mut egui::Ui, kind: Kind, proposal: &mut Proposal, contacts: &[Contact], edit: &mut Option<usize>, delete: &mut Option<usize>, reversed: bool) {
+#[allow(clippy::too_many_arguments)]
+fn line_controls(ui: &mut egui::Ui, kind: Kind, proposal: &mut Proposal, contacts: &[Contact], edit: &mut Option<usize>, delete: &mut Option<usize>, previewing: &mut bool, reversed: bool) {
     type Part<'a> = Box<dyn FnMut(&mut egui::Ui, &mut Proposal) + 'a>;
     let mut parts: Vec<Part> = Vec::new();
     parts.push(Box::new(|ui, proposal| {
@@ -656,6 +695,9 @@ fn line_controls(ui: &mut egui::Ui, kind: Kind, proposal: &mut Proposal, contact
                 proposal.title = shown_name(&contacts[keep]);
                 proposal.detail = format!("+ {}", others.join(", "));
             }
+        }));
+        parts.push(Box::new(|ui, _| {
+            preview_button(ui, previewing);
         }));
     }
     parts.push(Box::new(|ui, proposal| {
@@ -868,4 +910,103 @@ pub fn menu(ui: &mut egui::Ui, state: &mut AppState) -> Dialog {
         None if close || closed => Dialog::None,
         None => Dialog::Toolbox,
     }
+}
+
+/// The height of the merged contact's preview.
+const PREVIEW_HEIGHT: f32 = 170.0;
+
+/// The Preview toggle of a merge; true when it was pressed.
+fn preview_button(ui: &mut egui::Ui, on: &mut bool) -> bool {
+    let pressed = ui.add(Button::new("Preview").small().selected(*on)).on_hover_text("Show the contact this merge would make").clicked();
+    if pressed {
+        *on = !*on;
+    }
+    pressed
+}
+
+/// What merging `set` would make: the first contact with the others' data added. Each value the
+/// others bring is marked with a "+" in the accent colour.
+fn merged_preview(ui: &mut egui::Ui, contacts: &[Contact], set: &[usize]) {
+    let primary = &contacts[set[0]];
+    let mut merged = primary.clone();
+    for &other in &set[1..] {
+        optimize::merge(&mut merged, &contacts[other]);
+    }
+    let accent = ui.visuals().hyperlink_color;
+    let value = |text: &str, added: bool| if added { RichText::new(format!("+ {text}")).color(accent) } else { RichText::new(text) };
+    let row = |ui: &mut egui::Ui, kind: &str, text: RichText| {
+        ui.horizontal_top(|ui| {
+            ui.add_sized([72.0, 0.0], Label::new(RichText::new(if kind.is_empty() { "other" } else { kind }).weak()).halign(Align::RIGHT).truncate());
+            ui.add(Label::new(text).wrap());
+        });
+    };
+    let heading = |ui: &mut egui::Ui, title: &str| {
+        ui.add_space(6.0);
+        ui.label(RichText::new(title).small().weak());
+    };
+    let typed = |ui: &mut egui::Ui, title: &str, values: &[hco_core::Typed], before: &[hco_core::Typed]| {
+        if values.is_empty() {
+            return;
+        }
+        heading(ui, title);
+        for v in values {
+            row(ui, &v.kind, value(&v.value, !before.iter().any(|b| b.value == v.value)));
+        }
+    };
+    ui.separator();
+    ui.horizontal(|ui| {
+        ui.label(RichText::new(format!("MERGED CONTACT, FROM {}", set.len())).small().weak());
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| ui.label(RichText::new("+ what the others add").small().color(accent)));
+    });
+    ui.push_id("merged preview", |ui| list(ui, PREVIEW_HEIGHT, |ui| {
+        let name = shown_name(&merged);
+        ui.label(value(&name, name != shown_name(primary)).size(16.0).strong());
+        let work = |c: &Contact| [c.title.as_str(), c.department.as_str(), c.company.as_str()].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join(", ");
+        if !work(&merged).is_empty() {
+            ui.label(value(&work(&merged), work(&merged) != work(primary)).weak());
+        }
+        typed(ui, "PHONES", &merged.phones, &primary.phones);
+        typed(ui, "E-MAILS", &merged.emails, &primary.emails);
+        if !merged.addresses.is_empty() {
+            heading(ui, "ADDRESSES");
+            for a in &merged.addresses {
+                row(ui, &a.kind, value(&a.one_line(), !primary.addresses.iter().any(|b| b.one_line() == a.one_line())));
+            }
+        }
+        typed(ui, "WEBSITES", &merged.websites, &primary.websites);
+        let other = [("nickname", &merged.nickname, &primary.nickname), ("birthday", &merged.birthday, &primary.birthday), ("anniversary", &merged.anniversary, &primary.anniversary)];
+        let kept: Vec<&String> = merged.groups.iter().filter(|g| primary.groups.contains(g)).collect();
+        let added: Vec<&String> = merged.groups.iter().filter(|g| !primary.groups.contains(g)).collect();
+        if other.iter().any(|(_, v, _)| !v.is_empty()) || !merged.groups.is_empty() || merged.photo.is_some() {
+            heading(ui, "OTHER DETAILS");
+            for (kind, now, before) in other {
+                if !now.is_empty() {
+                    row(ui, kind, value(now, before.is_empty()));
+                }
+            }
+            if !kept.is_empty() {
+                row(ui, "groups", value(&kept.iter().map(|g| g.as_str()).collect::<Vec<_>>().join(", "), false));
+            }
+            if !added.is_empty() {
+                row(ui, "groups", value(&added.iter().map(|g| g.as_str()).collect::<Vec<_>>().join(", "), true));
+            }
+            if merged.photo.is_some() {
+                row(ui, "picture", value(if primary.photo.is_some() { "its own" } else { "from another contact" }, primary.photo.is_none()));
+            }
+        }
+        if !merged.note.is_empty() {
+            heading(ui, "NOTE");
+            match merged.note.strip_prefix(primary.note.as_str()) {
+                Some(rest) if !primary.note.is_empty() => {
+                    ui.label(primary.note.as_str());
+                    if !rest.trim().is_empty() {
+                        ui.label(value(rest.trim(), true));
+                    }
+                }
+                _ => {
+                    ui.label(value(&merged.note, merged.note != primary.note));
+                }
+            }
+        }
+    }));
 }

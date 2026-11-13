@@ -1221,3 +1221,51 @@ fn the_list_is_filtered_by_text_data_and_group() {
     assert_eq!(listed(&harness).len(), 5);
     picture(&mut harness, "filters-dark.png");
 }
+
+#[test]
+fn both_merge_steps_preview_the_merged_contact() {
+    use herbs_contacts_optimizer::toolbox::Kind;
+    // Merge Contacts: Preview on a line shows that set merged, with what the others add marked.
+    let mut harness = step(Kind::Merging);
+    assert!(harness.query_by_label_contains("MERGED CONTACT").is_none());
+    harness.get_by_label("Preview").click();
+    harness.run();
+    harness.get_by_label("MERGED CONTACT, FROM 2");
+    harness.get_by_label("+ 555 0199");
+    // What the contact merged into has already, and the e-mail both have, are not marked.
+    assert!(harness.query_by_label("+ 555 0100").is_none() && harness.query_by_label("+ bob@example.org").is_none());
+    picture(&mut harness, "merge-preview.png");
+    // Choosing another contact to merge into turns the preview around.
+    harness.get_by_label("Merge into: bob stone").click();
+    harness.run();
+    harness.get_by_label_contains("Stone Bob — 555 0199").click();
+    harness.run();
+    harness.get_by_label("+ 555 0100");
+    harness.get_by_label("Preview").click();
+    harness.run();
+    assert!(harness.query_by_label_contains("MERGED CONTACT").is_none());
+    assert_eq!(contacts(&harness).len(), 5, "a preview changes nothing");
+
+    // Merge by Hand: the ticked contacts, merged into the chosen one.
+    let mut harness = window(egui::Theme::Dark, |state| {
+        state.add_book(messy());
+        state.open_step(Kind::ManualMerging);
+    });
+    harness.run();
+    harness.get_by_role_and_label(egui::Role::CheckBox, "ANA GARCÍA").click();
+    harness.run();
+    assert!(harness.query_by_label("Preview").is_none(), "one ticked contact has nothing to merge");
+    harness.get_by_role_and_label(egui::Role::CheckBox, "Broken").click();
+    harness.run();
+    harness.get_by_label("Preview").click();
+    harness.run();
+    harness.get_by_label("+ n/a");
+    harness.get_by_label("+ Works at Acme");
+    picture(&mut harness, "merge-preview-dark.png");
+    harness.get_by_label("Merge into: ANA GARCÍA").click();
+    harness.run();
+    harness.get_by_label_contains("Broken — n/a").click();
+    harness.run();
+    harness.get_by_label("+ ana@example.org");
+    assert!(harness.query_by_label("+ Works at Acme").is_none());
+}
