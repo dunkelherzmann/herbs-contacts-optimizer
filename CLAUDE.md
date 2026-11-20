@@ -69,6 +69,13 @@ macOS first, then Linux and Windows, in Rust.
   the row below.
 - Window tests: a name in a dialog is usually also in the list behind it, so pick by role
   (`get_by_role_and_label(egui::Role::CheckBox, …)`); to type, `focus()`, `run()`, then `type_text`.
+- `get_by_label` panics when a label appears twice (two "Nothing found." rows in the wizard summary): count
+  repeats with `get_all_by_label(label).count()`. A new Toolbox `Kind` in `WIZARD_STEPS` also needs the
+  `[Kind; N]` array length and the wizard test's "STEP x OF N" line bumped.
+- macOS Contacts and Calendar permission: running the app's inner program straight from a shell makes the terminal
+  the responsible process, so no prompt shows and access is denied. Launch the bundle with `open -W -n APP --args …`
+  (it needs `NSContactsUsageDescription` in its `Info.plist`), and pass results back through `--out FILE`, since
+  `open` detaches stdout.
 - On Windows an instant synthetic click (Master Control `click`) is lost on an item in an egui popup (a
   combo box's list, a menu): use `drag` from the point to one pixel beside it, which holds the button long
   enough. Ordinary buttons take the instant click. A button made with `.selected(…)` is a toggle for
