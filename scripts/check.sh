@@ -1,7 +1,7 @@
 #!/bin/sh
 # Checks the current commit on the three machines: tests and clippy on the Mac, Linux and Windows. The window
 # tests draw off screen; on Windows they run in the signed-in desktop session, which has a graphics device.
-# The commit's files are sent to the other two over ssh, so neither needs a clone.
+# The commit's files are sent to the other two through Master Control (mc-exec), so neither needs a clone.
 #
 #   scripts/check.sh            every machine
 #   scripts/check.sh mac linux  only those
@@ -21,8 +21,8 @@ if [ "${1:-}" = "-w" ]; then
     shift
 fi
 MACHINES="${*:-mac linux windows}"
-# The ssh names of the Linux and Windows machines: from the environment, or from an untracked .hosts file
-# (two lines, LINUX_HOST=name and WINDOWS_HOST=name).
+# The Master Control names of the Linux and Windows machines (`mctl machines`): linux and windows, or others
+# from the environment or an untracked .hosts file (two lines, LINUX_HOST=name and WINDOWS_HOST=name).
 [ -f "$ROOT/.hosts" ] && . "$ROOT/.hosts"
 LINUX_HOST="${LINUX_HOST:-linux}"
 WINDOWS_HOST="${WINDOWS_HOST:-windows}"
@@ -41,6 +41,10 @@ COMMIT="$(git rev-parse --short HEAD)"
 # One folder per commit on the other machines, so two checks at once don't delete each other's files.
 DIR="hco-check-$COMMIT"
 
+# The tar both machines get, written once; mc-exec copies it there and the machine unpacks it.
+TAR="$LOGS/$DIR.tar"
+case " $MACHINES " in *" linux "* | *" windows "*) send >"$TAR" ;; esac
+
 for machine in $MACHINES; do
     case "$machine" in
     mac)
@@ -48,25 +52,24 @@ for machine in $MACHINES; do
          echo $? >"$LOGS/mac.status") >"$LOGS/mac.log" 2>&1 &
         ;;
     linux)
-        (send | ssh -o ConnectTimeout=15 "$LINUX_HOST" "rm -rf /tmp/$DIR && mkdir -p /tmp/$DIR && tar -x -C /tmp/$DIR \
-            && cd /tmp/$DIR && PATH=\$HOME/.cargo/bin:\$PATH CARGO_TARGET_DIR=\$HOME/.cache/hco-check-target timeout 1800 sh -c 'cargo test --workspace 2>&1 && cargo clippy --workspace --all-targets -- -D warnings 2>&1'; \
-            code=\$?; rm -rf /tmp/$DIR; exit \$code" >"$LOGS/linux.log" 2>&1
-         echo $? >"$LOGS/linux.status") &
+        (mc-exec "$LINUX_HOST" --put "$TAR" "/tmp/$DIR.tar" \
+         && mc-exec "$LINUX_HOST" --timeout 1900 "rm -rf /tmp/$DIR && mkdir -p /tmp/$DIR && tar -x -C /tmp/$DIR -f /tmp/$DIR.tar \
+            && rm -f /tmp/$DIR.tar && cd /tmp/$DIR && PATH=\$HOME/.cargo/bin:\$PATH CARGO_TARGET_DIR=\$HOME/.cache/hco-check-target timeout 1800 sh -c 'cargo test --workspace 2>&1 && cargo clippy --workspace --all-targets -- -D warnings 2>&1'; \
+            code=\$?; rm -rf /tmp/$DIR /tmp/$DIR.tar; exit \$code"
+         echo $? >"$LOGS/linux.status") >"$LOGS/linux.log" 2>&1 &
         ;;
     windows)
-        # Sent over ssh, but run in the signed-in desktop session (through mctl, a remote-control tool):
-        # the window tests need a graphics device, which an ssh session doesn't have. The build folder is
-        # one kept outside Temp, named in the sent copy's cargo settings (a variable set on the mctl line
-        # doesn't reach cargo). Folders an interrupted check left more than a day ago are cleared first.
-        (send | ssh -o ConnectTimeout=15 "$WINDOWS_HOST" "(forfiles /p %TEMP% /m hco-check-* /d -1 /c \"cmd /c if @isdir==TRUE rmdir /s /q @path\" >nul 2>&1) \
+        # Master Control runs it in the signed-in desktop session, which has the graphics device the window
+        # tests need. The build folder is kept outside Temp. Folders an interrupted check left more than a
+        # day ago are cleared first.
+        (WTEMP="$(mc-exec "$WINDOWS_HOST" "echo %TEMP%" | tr -d '\r\n')" && [ -n "$WTEMP" ] \
+         && mc-exec "$WINDOWS_HOST" --put "$TAR" "$WTEMP\\$DIR.tar" \
+         && mc-exec "$WINDOWS_HOST" --timeout 3600 "(forfiles /p %TEMP% /m hco-check-* /d -1 /c \"cmd /c if @isdir==TRUE rmdir /s /q @path\" >nul 2>&1) \
             & (if exist %TEMP%\\$DIR rmdir /s /q %TEMP%\\$DIR) & mkdir %TEMP%\\$DIR \
-            && tar -x -C %TEMP%\\$DIR && cd /d %TEMP%\\$DIR \
-            && (echo.& echo [build]& echo target-dir = \"%LOCALAPPDATA:\\=/%/hco-check-target\") >> .cargo\\config.toml && cd" >"$LOGS/windows.where" 2>&1 \
-         && mctl exec windows --timeout 1800 --cwd "$(tail -1 "$LOGS/windows.where" | tr -d '\r')" -- \
-            cmd /c "cargo test --workspace 2>&1 && cargo clippy --workspace --all-targets -- -D warnings 2>&1 && echo HCO_CHECK_PASSED" \
-            >"$LOGS/windows.log" 2>&1
-         grep -q HCO_CHECK_PASSED "$LOGS/windows.log"; echo $? >"$LOGS/windows.status"
-         ssh -o ConnectTimeout=15 "$WINDOWS_HOST" "cd /d %TEMP% & rmdir /s /q %TEMP%\\$DIR" >/dev/null 2>&1) &
+            && tar -x -C %TEMP%\\$DIR -f %TEMP%\\$DIR.tar && del /q %TEMP%\\$DIR.tar && cd /d %TEMP%\\$DIR \
+            && set CARGO_TARGET_DIR=%LOCALAPPDATA%\\hco-check-target&& cargo test --workspace 2>&1 && cargo clippy --workspace --all-targets -- -D warnings 2>&1"
+         echo $? >"$LOGS/windows.status"
+         mc-exec "$WINDOWS_HOST" "cd /d %TEMP% & rmdir /s /q %TEMP%\\$DIR & del /q %TEMP%\\$DIR.tar" >/dev/null 2>&1) >"$LOGS/windows.log" 2>&1 &
         ;;
     *)
         echo "check.sh: unknown machine $machine (mac, linux, windows)" >&2
@@ -75,6 +78,7 @@ for machine in $MACHINES; do
     esac
 done
 wait
+rm -f "$TAR"
 
 failed=0
 for machine in $MACHINES; do

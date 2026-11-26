@@ -65,3 +65,4 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [x] Mac (window tests pass)
   - [x] Linux (window tests pass)
   - [x] Windows (window tests pass)
+- [ ] 2026-11-26 (developer tooling): Scripts run commands on the Linux and Windows machines through Master Control (mc-exec) instead of SSH. `scripts/check.sh` copies the files with `mc-exec --put` and builds and tests through `mc-exec`, by the Master Control names `linux` and `windows`.
