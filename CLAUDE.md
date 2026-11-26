@@ -24,7 +24,8 @@ macOS first, then Linux and Windows, in Rust.
 - `scripts/check.sh [mac linux windows]` tests the last commit on all three machines (`-w` sends the working
   tree); logs in `.build/check/`. `linux/scripts/build.sh [--install]` (on Linux) makes the Flatpak;
   `windows\scripts\build.ps1` (on Windows) makes the one `.exe` and copies it to the Desktop. `check.sh`
-  reads the two machines' ssh names from an untracked `.hosts` file (`LINUX_HOST=…`, `WINDOWS_HOST=…`).
+  reaches the two machines through Master Control (`mc-exec`) as `linux` and `windows`; other names go in an
+  untracked `.hosts` file (`LINUX_HOST=…`, `WINDOWS_HOST=…`).
 - `macos/scripts/build.sh [--install]` makes `dist/Herb's Contacts Optimizer.app` (and copies it to
   `/Applications` unless the app is running).
 - The version is `VERSION` plus the commits since it changed (`scripts/version.sh`), baked in by `app/build.rs`.
