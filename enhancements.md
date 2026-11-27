@@ -70,3 +70,8 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [ ] Mac
   - [ ] Linux
   - [ ] Windows
+- [x] 2026-11-27 (Mac): Security and dependency checks in scripts/check.sh: gitleaks on the history, cargo audit on the dependencies (PR #17)
+- [ ] 2026-11-27: Local crash reports: when the app crashes it saves a report (what happened, the version, the stack) in its own data folder on that machine, never sent anywhere, and shows it at the next start so the agent can read it.
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
