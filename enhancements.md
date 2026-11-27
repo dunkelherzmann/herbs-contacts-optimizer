@@ -66,3 +66,7 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [x] Linux (window tests pass)
   - [x] Windows (window tests pass)
 - [x] 2026-11-26 (developer tooling): Scripts run commands on the Linux and Windows machines through Master Control (mc-exec) instead of SSH. Done in PR #15. `scripts/check.sh` copies the files with `mc-exec --put` and builds and tests through `mc-exec`, by the Master Control names `linux` and `windows`.
+- [ ] 2026-11-27 (Mac, Linux, Windows): The platform rules: each system ships a self-contained installable variant and a portable binary (Mac: the `.app`; Linux: a Flatpak and one static binary; Windows: a zip with an install script that gets past SmartScreen and the missing signature, explained with its caveats, beside the `.exe` installer that installs to Program Files with an uninstaller `.exe` and an entry in installed apps, plus the portable `.exe`); the app follows the system's light or dark mode in each platform's own Finder, File Explorer or window-manager colours; and on top of the feature tests, a side-by-side check against the Mac with pictures of every window.
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
