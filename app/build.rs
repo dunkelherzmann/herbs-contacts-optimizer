@@ -36,6 +36,13 @@ fn main() {
         resource.set("ProductName", "Herb\u{2019}s Contacts Optimizer");
         resource.set("FileDescription", "Herb\u{2019}s Contacts Optimizer");
         resource.set("LegalCopyright", "Herbert Cisneros");
+        // The app's version, not the Rust package's, in the file's properties (File Explorer, installed apps).
+        resource.set("ProductVersion", &version);
+        resource.set("FileVersion", &version);
+        let mut parts = version.split('.').map(|n| n.parse::<u64>().unwrap_or(0));
+        let packed = (0..4).fold(0u64, |acc, _| (acc << 16) | parts.next().unwrap_or(0).min(0xFFFF));
+        resource.set_version_info(winresource::VersionInfo::FILEVERSION, packed);
+        resource.set_version_info(winresource::VersionInfo::PRODUCTVERSION, packed);
         resource.compile().expect("the Windows icon resource");
     }
 }
