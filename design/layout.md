@@ -19,9 +19,9 @@ Each system keeps its own separate title bar: the toolbar never runs into it (pr
 
 Other states: no address book (`empty.svg`, 15), filters open (`filters.svg`, 14), Copy To dialog (`copy-to.svg`, 33).
 
-## Work views in the main area (16), a proposal awaiting Herbert's yes
+## Work views in the main area (16), approved by Herbert 2026-11-28
 
-If he says no, these stay dialogs as today. Sidebar, toolbar and status line stay; the toolbar rests except Keep on Top and ☰.
+Sidebar, toolbar and status line stay; the toolbar rests except Keep on Top and ☰.
 
 - **Toolbox** (`toolbox.svg`): title and one line; the tools in three groups, one row each with its line and
   "›" (34); Close at the right. A row opens its step.
