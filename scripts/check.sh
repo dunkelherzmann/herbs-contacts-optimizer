@@ -51,13 +51,10 @@ DIR="hco-check-$COMMIT"
 TAR="$LOGS/$DIR.tar"
 case " $MACHINES " in *" linux "* | *" windows "*) send >"$TAR" ;; esac
 
-# Security first, here on the Mac; its line is printed before the machines'. Ignored advisory, with why and until when:
-# - RUSTSEC-2026-0592: url 2.5.8 (through webbrowser, from egui-winit), a stack overflow in Url::origin() on nested
-#   blob: URLs. Fixed in url 2.5.9, a dependency upgrade left to its own PR (bugs.md, 2026-11-27); drop the ignore
-#   once Cargo.lock has it.
+# Security first, here on the Mac; its line is printed before the machines'.
 case " $MACHINES " in *" mac "*)
     (PATH="$HOME/.local/bin:$PATH"; gitleaks detect --no-banner --no-color --redact 2>&1 \
-        && cargo audit --ignore RUSTSEC-2026-0592 2>&1
+        && cargo audit 2>&1
      echo $? >"$LOGS/security.status") >"$LOGS/security.log" 2>&1 ;;
 esac
 
