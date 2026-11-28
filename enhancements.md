@@ -4,15 +4,15 @@ Requests in the order received. `- [x]` once shipped, with the version.
 
 - [x] 2026-11-11 (all platforms): Study Contacts Optimizer for Android and list everything it does in `specs.md`. Done in 0.1.
 - [ ] 2026-11-11: The app for macOS first, then Linux and Windows, built on Rust. (All three are built and installed as of 0.2.)
-  - [ ] Mac (0.1: opens vCard and CSV files, lists and searches contacts, finds and deletes duplicates, exports, contact editor, Toolbox; the rest is in `pending.md`)
-  - [ ] Linux (0.2: the same app as a Flatpak, built, installed and seen running; what was not shown is in `linux/pending.md`)
-  - [ ] Windows (0.2: the same app as one portable `.exe`, built, on the Desktop and seen running; what was not shown is in `windows/pending.md`)
-  - Next (plan 2026-11-28): ticked per platform once that platform's `pending.md` has no "Not built" items left and its window has been clicked through with Master Control; it closes last, after the items below.
-- [ ] 2026-11-11 (all platforms): Read and write every known contacts file format. vCard 2.1/3.0/4.0 and CSV in 0.1; the others are in `pending.md`.
+  - [ ] Mac (0.1: opens vCard and CSV files, lists and searches contacts, finds and deletes duplicates, exports, contact editor, Toolbox; the rest is in the entries of 2026-11-28 below)
+  - [ ] Linux (0.2: the same app as a Flatpak, built, installed and seen running; what was not shown is in the Linux entries of 2026-11-28 below)
+  - [ ] Windows (0.2: the same app as one portable `.exe`, built, on the Desktop and seen running; what was not shown is in the Windows entries of 2026-11-28 below)
+  - Next (plan 2026-11-28): ticked per platform once that platform's open entries below are ticked and its window has been clicked through with Master Control; it closes last, after the items below.
+- [ ] 2026-11-11 (all platforms): Read and write every known contacts file format. vCard 2.1/3.0/4.0 and CSV in 0.1; the others are in SPECIFICATION.md §4, "Not built yet".
   - [ ] Mac
   - [ ] Linux
   - [ ] Windows
-  - Next (plan 2026-11-28): one PR per format, test-first, in `pending.md` order: CSV column mapping, Windows `.contact`, then the read-only formats. `.pst`/`.ost`/`.msg` are large closed formats and may be noted as not doable rather than built.
+  - Next (plan 2026-11-28): one PR per format, test-first, in SPECIFICATION.md §4 order: CSV column mapping, Windows `.contact`, then the read-only formats. `.pst`/`.ost`/`.msg` are large closed formats and may be noted as not doable rather than built.
 - [ ] 2026-11-11: An About page with version and info, like Herb's Terminal's. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
   - [x] Mac (0.1)
   - [ ] Linux (in 0.2, drawn by the off-screen tests; not opened in the real window)
@@ -25,13 +25,13 @@ Requests in the order received. `- [x]` once shipped, with the version.
 - [x] 2026-11-11 (all platforms): Import several contact files and work on them together. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Tick boxes left of the name in the list, with tick/untick all; export the ticked contacts to a new file. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Merge several contact files into one. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
-- [ ] 2026-11-11 (all platforms): Convert contact files into other formats. (Mac: vCard 3.0/4.0, Google and Outlook CSV, Excel, LDIF, jCard and xCard in 0.1; the rest are listed in `pending.md`)
+- [ ] 2026-11-11 (all platforms): Convert contact files into other formats. (Mac: vCard 3.0/4.0, Google and Outlook CSV, Excel, LDIF, jCard and xCard in 0.1; the rest are listed in SPECIFICATION.md §4)
   - [ ] Mac
   - [ ] Linux
   - [ ] Windows
   - Next (plan 2026-11-28): closes with the formats item above; each new writable format comes with a round-trip test.
 - [x] 2026-11-11 (all platforms): Profile pictures on contacts. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
-- [x] 2026-11-11 (all platforms): Light and dark themes, looking like macOS 27's Finder where possible. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports; the Finder-colour details are still open in `pending.md`.)
+- [x] 2026-11-11 (all platforms): Light and dark themes, looking like macOS 27's Finder where possible. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports; the Finder-colour details are still open in the light-colours entry below.)
 - [x] 2026-11-11 (all platforms): A country code on every contact: pick it by country from a dropdown, or type it. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Edit common fields in bulk for the ticked contacts. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): ⌘A / Ctrl+A selects all. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
@@ -155,3 +155,23 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [x] Mac
   - [x] Linux
   - [x] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Copy and move ticked contacts to another address book.** The reference app's mass copy and mass move between accounts, for open address books: Copy To and Move To for the ticked contacts, read-only ones included as a source (spec 1.1, Accounts; 2). Merge Address Books already covers "move all contacts". (Found in the Prime Directive inspect against the reference app.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Duplicate count and one-press Delete Duplicates.** The count of exact duplicates in the address book, shown where Find Duplicates is, and deleting them all in one step after asking, with Cancel as the default (spec 1.1, Start screen). (Found in the Prime Directive inspect against the reference app.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Editor: instant messaging, relatives, more organizations.** Instant-messaging names, relatives, and as many organizations as needed, each with department, title and its own address, in the model, the editor and every format that holds them; now they are only kept unchanged in vCard (spec 1.1, Contact editor). (Found in the Prime Directive inspect against the reference app.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Capitalization leaves academic titles alone.** "Dr.", "Prof.", "Ing." and the like keep their case, as in the reference app; now only values with `@` are skipped (spec 6, Capitalization). (Found in the Prime Directive inspect against the reference app.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Fuller wizard summary.** Per step: found, deleted, merged, repaired and added; for the address book: contacts before, after and modified (spec 1.1, Summary). Now it shows before and now and one line per step. (Found in the Prime Directive inspect against the reference app.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
