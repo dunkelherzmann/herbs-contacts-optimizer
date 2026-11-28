@@ -151,7 +151,7 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [ ] Windows
 - [ ] 2026-11-28 (Windows): **Windows: SmartScreen on another PC.** The `.exe` is not signed, so SmartScreen may warn on another PC; see the platform-rules entry for the install script. (From `windows/pending.md`.)
   - [ ] Windows
-- [x] 2026-11-28 (Mac, Linux, Windows): **One set of trackers for every platform.** His request: SPECIFICATION.md as the spec, no pending.md; open port items moved into the trackers. In #PR.
+- [x] 2026-11-28 (Mac, Linux, Windows): **One set of trackers for every platform.** His request: SPECIFICATION.md as the spec, no pending.md; open port items moved into the trackers. In #23.
   - [x] Mac
   - [x] Linux
   - [x] Windows
