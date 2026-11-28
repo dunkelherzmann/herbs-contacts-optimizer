@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" font-family="Helvetica, Arial, sans-serif">
+<rect width="100%" height="100%" fill="#1f1f1f"/>
+<rect x="0" y="0" width="1200" height="28" rx="0" fill="#383838"/>
+<circle cx="16" cy="14.0" r="6" fill="#ff5f57"/>
+<circle cx="36" cy="14.0" r="6" fill="#febc2e"/>
+<circle cx="56" cy="14.0" r="6" fill="#28c840"/>
+<text x="600.0" y="19" font-size="13" fill="#e6e6e6" text-anchor="middle" font-weight="600">Herb's Contacts Optimizer</text>
+<circle cx="705.0" cy="14" r="9" fill="#ffa940"/>
+<text x="705.0" y="18" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">1</text>
+<line x1="0" y1="28" x2="1200" y2="28" stroke="#444" stroke-width="1"/>
+<rect x="0" y="28" width="1200" height="52" rx="0" fill="#2b2b2b"/>
+<rect x="12" y="41" width="34" height="26" rx="6" fill="#3d3d3d"/>
+<line x1="22" y1="49" x2="36" y2="49" stroke="#e6e6e6" stroke-width="2"/>
+<line x1="22" y1="54" x2="36" y2="54" stroke="#e6e6e6" stroke-width="2"/>
+<line x1="22" y1="59" x2="36" y2="59" stroke="#e6e6e6" stroke-width="2"/>
+<circle cx="14" cy="35" r="9" fill="#ffa940"/>
+<text x="14" y="39" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">5</text>
+<circle cx="64" cy="35" r="9" fill="#ffa940"/>
+<text x="64" y="39" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">2</text>
+<rect x="62" y="41" width="57.6" height="26" rx="6" fill="#3d3d3d"/>
+<text x="90.8" y="58.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Open</text>
+<rect x="125.6" y="41" width="57.6" height="26" rx="6" fill="#3d3d3d"/>
+<text x="154.4" y="58.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Save</text>
+<rect x="189.2" y="41" width="65.4" height="26" rx="6" fill="#3d3d3d"/>
+<text x="221.89999999999998" y="58.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Export</text>
+<rect x="270.6" y="41" width="139.40000000000003" height="26" rx="6" fill="#3d3d3d"/>
+<text x="340.30000000000007" y="58.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Find Duplicates (3)</text>
+<circle cx="420.6" cy="35" r="9" fill="#ffa940"/>
+<text x="420.6" y="39" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">3</text>
+<rect x="416.00000000000006" y="41" width="67.39999999999999" height="26" rx="6" fill="#3d3d3d"/>
+<text x="449.70000000000005" y="58.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Wizard</text>
+<rect x="489.40000000000003" y="41" width="75.5" height="26" rx="6" fill="#3d3d3d"/>
+<text x="527.1500000000001" y="58.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Toolbox</text>
+<rect x="580.9000000000001" y="41" width="102.5" height="26" rx="6" fill="#3d3d3d"/>
+<text x="632.1500000000001" y="58.5" font-size="13" fill="#e6e6e6" text-anchor="middle">New Contact</text>
+<rect x="1154" y="41" width="34" height="26" rx="6" fill="#3d3d3d"/>
+<circle cx="1171" cy="51" r="4" fill="#e6e6e6"/>
+<line x1="1171" y1="55" x2="1171" y2="62" stroke="#e6e6e6" stroke-width="2"/>
+<circle cx="1184" cy="35" r="9" fill="#ffa940"/>
+<text x="1184" y="39" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">4</text>
+<rect x="946" y="41" width="200" height="26" rx="5" fill="#151515" stroke="#444" stroke-width="1"/>
+<text x="954" y="58.5" font-size="13" fill="#9a9a9a" text-anchor="start">Search</text>
+<rect x="868" y="41" width="70" height="26" rx="6" fill="#3d3d3d"/>
+<text x="903.0" y="58.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Filter</text>
+<circle cx="870" cy="35" r="9" fill="#ffa940"/>
+<text x="870" y="39" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">14</text>
+<line x1="0" y1="80" x2="1200" y2="80" stroke="#444" stroke-width="1"/>
+<rect x="0" y="80" width="210" height="674" rx="0" fill="#262626"/>
+<line x1="210" y1="80" x2="210" y2="754" stroke="#444" stroke-width="1"/>
+<text x="14" y="104" font-size="11" fill="#9a9a9a" text-anchor="start" font-weight="600">ADDRESS BOOKS</text>
+<circle cx="192" cy="100" r="9" fill="#ffa940"/>
+<text x="192" y="104" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">6</text>
+<rect x="6" y="116" width="198" height="26" rx="5" fill="#3d5a80"/>
+<text x="18" y="134" font-size="13" fill="#e6e6e6" text-anchor="start">Family.vcf  •</text>
+<text x="194" y="134" font-size="12" fill="#9a9a9a" text-anchor="end">6</text>
+<text x="18" y="164" font-size="13" fill="#e6e6e6" text-anchor="start">Work.csv</text>
+<text x="194" y="164" font-size="12" fill="#9a9a9a" text-anchor="end">1</text>
+<text x="18" y="194" font-size="13" fill="#e6e6e6" text-anchor="start">Old phone.vcf</text>
+<text x="115" y="194" font-size="11" fill="#9a9a9a" text-anchor="start">(read-only)</text>
+<text x="194" y="194" font-size="12" fill="#9a9a9a" text-anchor="end">214</text>
+<text x="18" y="226" font-size="13" fill="#7aa2d8" text-anchor="start">Open a file…</text>
+<rect x="12" y="714" width="186" height="26" rx="6" fill="#3d3d3d"/>
+<text x="105.0" y="731.5" font-size="13" fill="#9a9a9a" text-anchor="middle">Merge Address Books</text>
+<rect x="222" y="89" width="14" height="14" rx="3" fill="#151515" stroke="#444" stroke-width="1"/>
+<text x="284" y="101" font-size="12" fill="#9a9a9a" text-anchor="start">Name ▲</text>
+<text x="494" y="101" font-size="12" fill="#9a9a9a" text-anchor="start">Phone</text>
+<text x="641" y="101" font-size="12" fill="#9a9a9a" text-anchor="start">E-mail</text>
+<circle cx="260" cy="96" r="9" fill="#ffa940"/>
+<text x="260" y="100" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">7</text>
+<line x1="210" y1="112" x2="810" y2="112" stroke="#444" stroke-width="1"/>
+<rect x="214" y="113" width="592" height="36" rx="4" fill="#3d5a80"/>
+<rect x="222" y="124" width="14" height="14" rx="3" fill="#151515" stroke="#444" stroke-width="1"/>
+<circle cx="260" cy="131" r="12" fill="#3d3d3d" stroke="#444"/>
+<text x="260" y="135.2" font-size="10" fill="#9a9a9a" text-anchor="middle">AG</text>
+<text x="284" y="136" font-size="13" fill="#e6e6e6" text-anchor="start">Ana García</text>
+<text x="494" y="136" font-size="13" fill="#9a9a9a" text-anchor="start">+34 600 111 222</text>
+<text x="641" y="136" font-size="13" fill="#9a9a9a" text-anchor="start">ana@example.org</text>
+<rect x="210" y="149" width="600" height="36" rx="0" fill="#252525"/>
+<rect x="222" y="160" width="14" height="14" rx="3" fill="#7aa2d8" stroke="#444" stroke-width="1"/>
+<path d="M225 167 l3 3 l5 -6" stroke="#fff" stroke-width="2" fill="none"/>
+<circle cx="260" cy="167" r="12" fill="#3d3d3d" stroke="#444"/>
+<text x="260" y="171.2" font-size="10" fill="#9a9a9a" text-anchor="middle">BS</text>
+<text x="284" y="172" font-size="13" fill="#e6e6e6" text-anchor="start">Bob Stone</text>
+<text x="494" y="172" font-size="13" fill="#9a9a9a" text-anchor="start">555 0100</text>
+<text x="641" y="172" font-size="13" fill="#9a9a9a" text-anchor="start">bob@example.org</text>
+<rect x="222" y="196" width="14" height="14" rx="3" fill="#151515" stroke="#444" stroke-width="1"/>
+<circle cx="260" cy="203" r="12" fill="#3d3d3d" stroke="#444"/>
+<text x="260" y="207.2" font-size="10" fill="#9a9a9a" text-anchor="middle">CW</text>
+<text x="284" y="208" font-size="13" fill="#e6e6e6" text-anchor="start">Chen Wei</text>
+<text x="494" y="208" font-size="13" fill="#9a9a9a" text-anchor="start">+86 10 5550 0100</text>
+<text x="641" y="208" font-size="13" fill="#9a9a9a" text-anchor="start">chen@example.cn</text>
+<rect x="210" y="221" width="600" height="36" rx="0" fill="#252525"/>
+<rect x="222" y="232" width="14" height="14" rx="3" fill="#151515" stroke="#444" stroke-width="1"/>
+<circle cx="260" cy="239" r="12" fill="#3d3d3d" stroke="#444"/>
+<text x="260" y="243.2" font-size="10" fill="#9a9a9a" text-anchor="middle">CW</text>
+<text x="284" y="244" font-size="13" fill="#e6e6e6" text-anchor="start">chen  WEI</text>
+<text x="494" y="244" font-size="13" fill="#9a9a9a" text-anchor="start">+86 10 55500100</text>
+<text x="641" y="244" font-size="13" fill="#9a9a9a" text-anchor="start">Chen@example.cn</text>
+<rect x="222" y="268" width="14" height="14" rx="3" fill="#151515" stroke="#444" stroke-width="1"/>
+<circle cx="260" cy="275" r="12" fill="#3d3d3d" stroke="#444"/>
+<text x="260" y="279.2" font-size="10" fill="#9a9a9a" text-anchor="middle">DM</text>
+<text x="284" y="280" font-size="13" fill="#e6e6e6" text-anchor="start">Dana Müller</text>
+<text x="494" y="280" font-size="13" fill="#9a9a9a" text-anchor="start">0170 1234567</text>
+<text x="641" y="280" font-size="13" fill="#9a9a9a" text-anchor="start"></text>
+<rect x="210" y="293" width="600" height="36" rx="0" fill="#252525"/>
+<rect x="222" y="304" width="14" height="14" rx="3" fill="#7aa2d8" stroke="#444" stroke-width="1"/>
+<path d="M225 311 l3 3 l5 -6" stroke="#fff" stroke-width="2" fill="none"/>
+<circle cx="260" cy="311" r="12" fill="#3d3d3d" stroke="#444"/>
+<text x="260" y="315.2" font-size="10" fill="#9a9a9a" text-anchor="middle">BS</text>
+<text x="284" y="316" font-size="13" fill="#e6e6e6" text-anchor="start">Bob Stone</text>
+<text x="494" y="316" font-size="13" fill="#9a9a9a" text-anchor="start">555-0100</text>
+<text x="641" y="316" font-size="13" fill="#9a9a9a" text-anchor="start">bob@example.org</text>
+<circle cx="410" cy="239" r="9" fill="#ffa940"/>
+<text x="410" y="243" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">8</text>
+<rect x="210" y="710" width="600" height="44" rx="0" fill="#2b2b2b"/>
+<line x1="210" y1="710" x2="810" y2="710" stroke="#444" stroke-width="1"/>
+<text x="224" y="737" font-size="13" fill="#e6e6e6" text-anchor="start" font-weight="600">2 ticked</text>
+<rect x="300" y="719" width="84.10000000000001" height="26" rx="6" fill="#3d3d3d"/>
+<text x="342.05" y="736.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Copy To…</text>
+<rect x="390.1" y="719" width="86.10000000000001" height="26" rx="6" fill="#3d3d3d"/>
+<text x="433.15000000000003" y="736.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Move To…</text>
+<rect x="482.20000000000005" y="719" width="102.8" height="26" rx="6" fill="#3d3d3d"/>
+<text x="533.6" y="736.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Edit Ticked…</text>
+<rect x="591.0" y="719" width="65.4" height="26" rx="6" fill="#3d3d3d" stroke="#e06c5f" stroke-width="1"/>
+<text x="623.7" y="736.5" font-size="13" fill="#e06c5f" text-anchor="middle">Delete</text>
+<rect x="700" y="719" width="98" height="26" rx="6" fill="#3d3d3d"/>
+<text x="749.0" y="736.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Deselect All</text>
+<circle cx="290" cy="718" r="9" fill="#ffa940"/>
+<text x="290" y="722" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">9</text>
+<line x1="810" y1="80" x2="810" y2="754" stroke="#444" stroke-width="1"/>
+<rect x="1050" y="94" width="60" height="26" rx="6" fill="#3d3d3d"/>
+<text x="1080.0" y="111.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Edit</text>
+<rect x="1118" y="94" width="66" height="26" rx="6" fill="#3d3d3d"/>
+<text x="1151.0" y="111.5" font-size="13" fill="#e6e6e6" text-anchor="middle">Delete</text>
+<circle cx="862" cy="160" r="34" fill="#3d3d3d" stroke="#444"/>
+<text x="862" y="171.9" font-size="30" fill="#9a9a9a" text-anchor="middle">AG</text>
+<circle cx="900" cy="134" r="9" fill="#ffa940"/>
+<text x="900" y="138" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">10</text>
+<text x="910" y="158" font-size="22" fill="#e6e6e6" text-anchor="start">Ana García</text>
+<text x="910" y="180" font-size="13" fill="#9a9a9a" text-anchor="start">Manager, Acme</text>
+<text x="828" y="225" font-size="11" fill="#9a9a9a" text-anchor="start" font-weight="600">PHONES</text>
+<text x="910" y="247" font-size="13" fill="#9a9a9a" text-anchor="end">mobile</text>
+<text x="922" y="247" font-size="13" fill="#e6e6e6" text-anchor="start">+34 600 111 222</text>
+<text x="910" y="269" font-size="13" fill="#9a9a9a" text-anchor="end">work</text>
+<text x="922" y="269" font-size="13" fill="#e6e6e6" text-anchor="start">+34 910 000 000</text>
+<text x="828" y="303" font-size="11" fill="#9a9a9a" text-anchor="start" font-weight="600">E-MAILS</text>
+<text x="910" y="325" font-size="13" fill="#9a9a9a" text-anchor="end">home</text>
+<text x="922" y="325" font-size="13" fill="#e6e6e6" text-anchor="start">ana@example.org</text>
+<text x="828" y="359" font-size="11" fill="#9a9a9a" text-anchor="start" font-weight="600">ADDRESSES</text>
+<text x="910" y="381" font-size="13" fill="#9a9a9a" text-anchor="end">home</text>
+<text x="922" y="381" font-size="13" fill="#e6e6e6" text-anchor="start">Calle Mayor 1, 28001 Madrid</text>
+<text x="828" y="415" font-size="11" fill="#9a9a9a" text-anchor="start" font-weight="600">OTHER</text>
+<text x="910" y="437" font-size="13" fill="#9a9a9a" text-anchor="end">birthday</text>
+<text x="922" y="437" font-size="13" fill="#e6e6e6" text-anchor="start">1980-02-03</text>
+<text x="910" y="459" font-size="13" fill="#9a9a9a" text-anchor="end">groups</text>
+<text x="922" y="459" font-size="13" fill="#e6e6e6" text-anchor="start">Friends, Work</text>
+<text x="828" y="493" font-size="11" fill="#9a9a9a" text-anchor="start" font-weight="600">NOTE</text>
+<text x="910" y="515" font-size="13" fill="#9a9a9a" text-anchor="end"></text>
+<text x="922" y="515" font-size="13" fill="#e6e6e6" text-anchor="start">Met at the conference in Lisbon.</text>
+<rect x="0" y="754" width="1200" height="26" rx="0" fill="#2b2b2b"/>
+<line x1="0" y1="754" x2="1200" y2="754" stroke="#444" stroke-width="1"/>
+<text x="14" y="772" font-size="12" fill="#9a9a9a" text-anchor="start">6 contacts, 2 ticked, unsaved changes</text>
+<circle cx="266.8" cy="767" r="9" fill="#ffa940"/>
+<text x="266.8" y="771" font-size="10" fill="#fff" text-anchor="middle" font-weight="600">13</text>
+<text x="1186" y="772" font-size="12" fill="#9a9a9a" text-anchor="end">Opened Work.csv with 1 contact.</text>
+</svg>
