@@ -3,13 +3,13 @@
 Requests in the order received. `- [x]` once shipped, with the version.
 
 - [x] 2026-11-11 (all platforms): Study Contacts Optimizer for Android and list everything it does in `specs.md`. Done in 0.1.
-- [x] 2026-11-11: The app for macOS first, then Linux and Windows, built on Rust. (All three are built and installed as of 0.2.)
+- [ ] 2026-11-11: The app for macOS first, then Linux and Windows, built on Rust. (All three are built and installed as of 0.2.)
   - [ ] Mac (0.1: opens vCard and CSV files, lists and searches contacts, finds and deletes duplicates, exports, contact editor, Toolbox; the rest is in `pending.md`)
   - [ ] Linux (0.2: the same app as a Flatpak, built, installed and seen running; what was not shown is in `linux/pending.md`)
   - [ ] Windows (0.2: the same app as one portable `.exe`, built, on the Desktop and seen running; what was not shown is in `windows/pending.md`)
 - [ ] 2026-11-11 (all platforms): Read and write every known contacts file format. vCard 2.1/3.0/4.0 and CSV in 0.1; the others are in `pending.md`.
 - [ ] 2026-11-11 (all platforms): Connect to Outlook, Google and iCloud accounts to scan, import, export and edit their contacts, alongside local files.
-- [x] 2026-11-11: An About page with version and info, like Herb's Terminal's. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
+- [ ] 2026-11-11: An About page with version and info, like Herb's Terminal's. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
   - [x] Mac (0.1)
   - [ ] Linux (in 0.2, drawn by the off-screen tests; not opened in the real window)
   - [ ] Windows (in 0.2, drawn by the off-screen tests; not opened in the real window)

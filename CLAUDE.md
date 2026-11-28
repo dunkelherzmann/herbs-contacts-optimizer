@@ -28,6 +28,8 @@ macOS first, then Linux and Windows, in Rust.
   untracked `.hosts` file (`LINUX_HOST=…`, `WINDOWS_HOST=…`).
 - `macos/scripts/build.sh [--install]` makes `dist/Herb's Contacts Optimizer.app` (and copies it to
   `/Applications` unless the app is running).
+- `scripts/mutants.sh [--all | -f FILE]` runs cargo-mutants on `hco-core` (the branch's changes against `main` by
+  default) and lists the mutants no test caught; a report, never a merge blocker.
 - The version is `VERSION` plus the commits since it changed (`scripts/version.sh`), baked in by `app/build.rs`.
 
 ## Where things are
