@@ -87,3 +87,6 @@ macOS first, then Linux and Windows, in Rust.
   enough. Ordinary buttons take the instant click. A button made with `.selected(…)` is a toggle for
   assistive tools: `toggle` it, since `press` does nothing there.
 - The 8-point margin around the test pictures is the test harness's own frame, not the app's.
+- In egui `RichText::strong()` only changes the colour: a heavier weight needs `.variation("wght", 600.0)`, which works
+  because both fonts are variable (SF on the Mac, `app/assets/Inter-Variable.ttf` elsewhere). An egui `ScrollArea` is
+  never shorter than 64 points unless given `min_scrolled_height` (`ui::list` passes its height).
