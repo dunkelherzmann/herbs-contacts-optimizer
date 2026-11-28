@@ -11,13 +11,10 @@ The off-screen window tests pass there too.
 
 ## Not built
 
-1. Writing back to the computer's own accounts (read-only, as on the Mac).
-2. Address books kept by anything other than Evolution Data Server (KDE's Akonadi) are not reached.
+Nothing.
 
 ## Not yet shown
 
-- An address book of a GNOME Online Account (Google, Microsoft, Nextcloud): only local address books were
-  read. A book that needs a password prompt from Evolution Data Server has not been tried.
 - Assistive tools did not find the window's controls in the Flatpak, although it may talk to the
   accessibility bus. No screen reader was running; Orca has not been tried.
 - A Wayland session: the test desktop runs X11.

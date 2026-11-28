@@ -11,14 +11,10 @@ contact store and listing its address book. The off-screen window tests pass the
 
 ## Not built
 
-1. Writing back to the computer's own accounts (read-only, as on the Mac). Windows lets other apps write to
-   an account's address book only in a limited way, so this may stay read-only there.
+Nothing.
 
 ## Not yet shown
 
-- Reading a contact from the Windows contact store: the test PC's store has one address book and it is empty,
-  so the step that turns a Windows contact into a vCard has never run. An address book without a name is
-  listed as "Windows contacts".
 - Where the backup of a saved file lands (`%APPDATA%\HerbsContactsOptimizer`) was not looked at.
 - Everything else in the window (editor, Wizard, Toolbox, Export, bulk edit, CardDAV accounts, the light
   theme, dropping a file on the window, the question on closing with unsaved changes) was drawn only off
