@@ -7,27 +7,34 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [ ] Mac (0.1: opens vCard and CSV files, lists and searches contacts, finds and deletes duplicates, exports, contact editor, Toolbox; the rest is in `pending.md`)
   - [ ] Linux (0.2: the same app as a Flatpak, built, installed and seen running; what was not shown is in `linux/pending.md`)
   - [ ] Windows (0.2: the same app as one portable `.exe`, built, on the Desktop and seen running; what was not shown is in `windows/pending.md`)
+  - Next (plan 2026-11-28): ticked per platform once that platform's `pending.md` has no "Not built" items left and its window has been clicked through with Master Control; it closes last, after the items below.
 - [ ] 2026-11-11 (all platforms): Read and write every known contacts file format. vCard 2.1/3.0/4.0 and CSV in 0.1; the others are in `pending.md`.
+  - Next (plan 2026-11-28): one PR per format, test-first, in `pending.md` order: CSV column mapping, Windows `.contact`, then the read-only formats. `.pst`/`.ost`/`.msg` are large closed formats and may be noted as not doable rather than built.
 - [ ] 2026-11-11 (all platforms): Connect to Outlook, Google and iCloud accounts to scan, import, export and edit their contacts, alongside local files.
+  - Next (plan 2026-11-28): reached through the computer's own accounts (the item of 2026-11-12) and CardDAV, since Google's and Microsoft's own sign-in needs a developer registration. Closes when those two items do.
 - [ ] 2026-11-11: An About page with version and info, like Herb's Terminal's. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
   - [x] Mac (0.1)
   - [ ] Linux (in 0.2, drawn by the off-screen tests; not opened in the real window)
   - [ ] Windows (in 0.2, drawn by the off-screen tests; not opened in the real window)
+  - Next (plan 2026-11-28): open About in the installed Linux Flatpak and the Windows `.exe` through Master Control, take a picture of each, then tick.
 - [x] 2026-11-11 (Mac; Linux and Windows come with their ports): Contact editor and Toolbox. Done in 0.1.
 - [x] 2026-11-11 (all platforms): Follow the reference app more closely in how duplicates, similar contacts, invalid contacts, names and capitalization are judged. Done in 0.1.
 - [x] 2026-11-11 (Mac; Linux and Windows come with their ports): Save back to the file with a backup, Restore, and the Optimization Wizard with its summary. Done in 0.1.
 - [ ] 2026-11-11 (Mac first): Accounts. iCloud and other CardDAV servers with the locked store for sign-ins are in 0.1 on the Mac and 0.2 on Linux and Windows (tested against a pretend server, not yet a real account); Google and Microsoft are open.
+  - Next (plan 2026-11-28): signing in to a real iCloud or other CardDAV account needs Herbert's own account, so it waits for his yes. Google and Microsoft go the computer's-accounts way (no developer registration).
 - [x] 2026-11-11 (all platforms): Edit or delete a contact at any stage of the Wizard or Toolbox. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Import several contact files and work on them together. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Tick boxes left of the name in the list, with tick/untick all; export the ticked contacts to a new file. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Merge several contact files into one. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [ ] 2026-11-11 (all platforms): Convert contact files into other formats. (Mac: vCard 3.0/4.0, Google and Outlook CSV, Excel, LDIF, jCard and xCard in 0.1; the rest are listed in `pending.md`)
+  - Next (plan 2026-11-28): closes with the formats item above; each new writable format comes with a round-trip test.
 - [x] 2026-11-11 (all platforms): Profile pictures on contacts. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Light and dark themes, looking like macOS 27's Finder where possible. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports; the Finder-colour details are still open in `pending.md`.)
 - [x] 2026-11-11 (all platforms): A country code on every contact: pick it by country from a dropdown, or type it. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Edit common fields in bulk for the ticked contacts. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): ⌘A / Ctrl+A selects all. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [ ] 2026-11-11 (all platforms): Common keyboard shortcuts for moving around and editing. (List navigation keys: Mac in 0.1, Linux and Windows in 0.2 with the ports; undo is still open.)
+  - Next (plan 2026-11-28): Undo and Redo (⌘Z / ⇧⌘Z, Ctrl+Z / Ctrl+Y) for changes to contacts, test-first, one PR.
 - [x] 2026-11-11 (all platforms): Choose which of the similar contacts to merge into. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Go through the wizard or the list one contact at a time. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Wizard/Toolbox: show every number without a country code and pick the code (country and code dropdown, or typed) contact by contact. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
@@ -38,6 +45,7 @@ Requests in the order received. `- [x]` once shipped, with the version.
 - [x] 2026-11-12 (all platforms): In the editor, flatten the name parts into the Name field (first, middle, last become one line, middle and last emptied) and split a full Name back into first, middle and last. (Done: Mac in 0.2 (PR #4), Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-12 (all platforms): A Toolbox and wizard step that catches contacts where the Name field already holds the full name and the middle and last names repeat it (a merge artefact), and offers to tidy them, one at a time or all at once: merge the parts into the Name and empty the rest, or split the Name into the three parts. (Done: Mac in 0.2 (PR #4), Linux and Windows in 0.2 with the ports.)
 - [ ] 2026-11-12 (all platforms): Read and write Google and Microsoft account contacts through the operating system's own contacts store (the accounts already signed in at OS level), so the app needs no developer registration. Evaluated 2026-11-12. Reading: Mac in 0.2 (PR #2); Linux in 0.2 from Evolution Data Server (PR #5), tried with a local address book, not with an online account; Windows in 0.2 from the Windows contact store (PR #6), tried only with an empty store. Writing back is open on all three.
+  - Next (plan 2026-11-28): writing back, one PR per system, tried on a test address book first; writing to his real accounts waits for his yes. On Windows, writing may stay limited to what the system allows.
 - [x] 2026-11-11: Publish the repository. Public since 2026-11-11 at https://github.com/dunkelherzmann/herbs-contacts-optimizer, as version 0.2.
 - [x] 2026-11-12: Publish the builds as a release. Release 0.2.5 (tag `v0.2.5`), built on each system from the tagged commit: the Mac app as a zip, the Linux Flatpak bundle and the Windows `.exe` as a zip, with checksums. Each passed its self-check. First published as a pre-release, then made a full release marked Latest the same day, so the repository's front page shows it.
 - [x] 2026-11-12: Plain wording in the spec. A pass with the humanizer skill over the text files: four long dashes in `specs.md` (Tidy Names) became colons and brackets. The rest already read plainly.
@@ -70,8 +78,10 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [ ] Mac
   - [ ] Linux
   - [ ] Windows
+  - Next (plan 2026-11-28, done first with crash reports): Linux static binary beside the Flatpak; Windows Inno Setup installer, uninstaller and install script, adapted from Herb's DM; then the side-by-side pictures against the Mac in both appearances.
 - [x] 2026-11-27 (Mac): Security and dependency checks in scripts/check.sh: gitleaks on the history, cargo audit on the dependencies (PR #17)
 - [ ] 2026-11-27: Local crash reports: when the app crashes it saves a report (what happened, the version, the stack) in its own data folder on that machine, never sent anywhere, and shows it at the next start so the agent can read it.
   - [ ] Mac
   - [ ] Linux
   - [ ] Windows
+  - Next (plan 2026-11-28, done first): a panic hook in the core that writes the report to the app's data folder, and a dialog at the next start; tested by a forced crash on each system.
