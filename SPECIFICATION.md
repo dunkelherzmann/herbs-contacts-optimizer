@@ -282,7 +282,7 @@ address books have no file and no server, so Save offers to export them.
 | Missing information | No name, or no phone number and no e-mail address. |
 | Fill in empty names | The nickname, then the organization, then the part of the e-mail address before `@`, then the phone number. |
 | Tidy names | A contact whose Name field already holds the whole name while the middle and last names repeat it (a leftover from merging two copies). Only flagged when the parts are redundant with the Name field: a healthy contact with the full name in its display name and the parts separate is left alone. The fix either keeps the full name in the Name field and empties the parts, or splits the Name field into first, middle and last. |
-| Capitalization | "JOHN SMITH" and "john smith" become "John Smith" and "MCDONALD" becomes "McDonald"; particles (van, de, von), names already in mixed case and e-mail addresses are left alone. |
+| Capitalization | "JOHN SMITH" and "john smith" become "John Smith" and "MCDONALD" becomes "McDonald"; particles (van, de, von), academic titles (Dr., Prof.), names already in mixed case and e-mail addresses are left alone. |
 | Search and replace | Replaces the exact text, upper and lower case included, everywhere in the ticked contacts. |
 | Country codes | With the chosen country: an international prefix becomes `+`, a trunk prefix is dropped, and the country code is put in front of national numbers. |
 | Simplify numbers | Everything but digits and a leading `+` is removed. |
