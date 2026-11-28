@@ -43,6 +43,9 @@ macOS first, then Linux and Windows, in Rust.
   and the shapes are the app's own; take colours from `theme::of(ui)`, never hard-code them), `ui.rs` (window, list, sidebar, dialogs), `toolbox.rs` (steps and wizard), `editor.rs`,
   `bulk.rs`, `accounts.rs` (helper thread plus a "working" dialog), `osaccounts.rs` (the computer's own accounts: one
   backend per system behind `ContactStore`; `--read-os-accounts [--out FILE]` lists them without the window).
+- The Toolbox, its steps, the wizard and the editor are work views, not dialogs: `work_view` draws them in the
+  main area and `editor_view` in the contact's panel, each through `ui::pane` (Esc leaves); `working()` rests the
+  toolbar, the address books and the list meanwhile. Confirmations and the rest stay `ui::modal` dialogs.
 - A dialog handler returns the next `Dialog`; one that starts a job returns
   `std::mem::replace(&mut self.dialog, Dialog::None)` so the "working" dialog it set survives.
 - `scripts/mark-done.py "text" "note"` adds a platform note to one line of `enhancements.md`.

@@ -1,7 +1,7 @@
 //! The contact editor: a form over a copy of the contact, written back only on Save.
 
 use crate::toolbox::Step;
-use crate::ui::{list, modal, section, AppState, Dialog};
+use crate::ui::{list, pane, section, AppState, Dialog};
 use egui::{Align, Button, Label, Layout, RichText, TextEdit};
 use hco_core::{Address, Contact, Typed};
 
@@ -40,9 +40,17 @@ impl Editor {
     /// Draws the form; returns the dialog to show next (itself until Save or Cancel).
     pub fn show(mut self, ui: &mut egui::Ui, state: &mut AppState) -> Dialog {
         let (mut save, mut cancel, mut choose) = (false, false, false);
-        let closed = modal(ui, "editor", 540.0, |ui| {
-            ui.label(RichText::new(if self.index.is_some() { "Edit Contact" } else { "New Contact" }).size(17.0).strong());
-            list(ui, (ui.ctx().content_rect().height() - 190.0).max(160.0), |ui| {
+        let closed = pane(ui, "editor", |ui| {
+            // In the contact's panel: the title with Cancel and Save Contact, then the form, which scrolls.
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(if self.index.is_some() { "Edit Contact" } else { "New Contact" }).size(17.0).strong());
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    save = ui.add(Button::new("Save Contact").min_size(egui::vec2(80.0, 26.0))).on_hover_text("Keep these changes in the address book").clicked();
+                    cancel = ui.add(Button::new("Cancel").min_size(egui::vec2(80.0, 26.0))).on_hover_text("Drop these changes (Esc)").clicked();
+                });
+            });
+            ui.add_space(6.0);
+            list(ui, ui.available_height().max(160.0), |ui| {
                 let c = &mut self.draft;
                 section(ui, "PICTURE");
                 ui.horizontal(|ui| {
@@ -140,11 +148,6 @@ impl Editor {
                     let label = ui.add_sized([LABEL, 22.0], Label::new(RichText::new("Note").weak()).halign(Align::RIGHT));
                     ui.add(TextEdit::multiline(&mut c.note).desired_rows(3).desired_width(f32::INFINITY)).labelled_by(label.id);
                 });
-            });
-            ui.add_space(12.0);
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                save = ui.add(Button::new("Save Contact").min_size(egui::vec2(80.0, 26.0))).on_hover_text("Keep these changes in the address book").clicked();
-                cancel = ui.add(Button::new("Cancel").min_size(egui::vec2(80.0, 26.0))).on_hover_text("Drop these changes (Esc)").clicked();
             });
         });
         if choose {
