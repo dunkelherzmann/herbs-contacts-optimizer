@@ -624,8 +624,9 @@ impl Step {
                 }
             } else {
                 // The list takes the room the main area has left above the preview and the buttons.
-                let room = ui.available_height() - 60.0 - if self.preview_set(&book.contacts).is_some() { PREVIEW_HEIGHT + 30.0 } else { 0.0 };
-                let height = room.max(120.0);
+                // The list as tall as its lines, up to the room left above the preview and the footer.
+                let room = ui.available_height() - FOOTER - if self.preview_set(&book.contacts).is_some() { PREVIEW_HEIGHT + 40.0 } else { 0.0 };
+                let height = (len.max(2) as f32 * 32.0).min(room.max(120.0));
                 let mut previewed = self.preview;
                 list(ui, height, |ui| {
                     if self.proposals.is_empty() {
@@ -660,6 +661,7 @@ impl Step {
             if let Some(set) = self.preview_set(&book.contacts) {
                 merged_preview(ui, &book.contacts, &set);
             }
+            footer_gap(ui);
             ui.separator();
             ui.add_space(6.0);
             ui.horizontal(|ui| {
@@ -901,7 +903,9 @@ impl Wizard {
                     });
                 }
             });
-            ui.add_space(12.0);
+            footer_gap(ui);
+            ui.separator();
+            ui.add_space(6.0);
             ui.horizontal(|ui| {
                 let size = egui::vec2(80.0, 26.0);
                 undo = ui.add(Button::new("Undo All").min_size(size)).on_hover_text("Put every contact back as it was before the wizard").clicked();
@@ -949,13 +953,17 @@ pub fn choose_steps(mut steps: Vec<(Kind, bool)>, ui: &mut egui::Ui, state: &mut
         ui.separator();
         for (kind, ticked) in &mut steps {
             ui.horizontal(|ui| {
-                ui.checkbox(ticked, kind.title());
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.add(Label::new(RichText::new(kind.short()).weak()).truncate());
+                // The name in a column of its own, its line beside it.
+                ui.allocate_ui_with_layout(egui::vec2(220.0, 24.0), Layout::left_to_right(Align::Center), |ui| {
+                    ui.set_width(220.0);
+                    ui.checkbox(ticked, kind.title());
                 });
+                ui.add(Label::new(RichText::new(kind.short()).weak()).truncate());
             });
         }
-        ui.add_space(12.0);
+        footer_gap(ui);
+        ui.separator();
+        ui.add_space(6.0);
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             let size = egui::vec2(80.0, 26.0);
             let any = steps.iter().any(|(_, ticked)| *ticked);
@@ -978,22 +986,38 @@ pub fn choose_steps(mut steps: Vec<(Kind, bool)>, ui: &mut egui::Ui, state: &mut
 }
 
 /// One tool in the Toolbox: its name, a line about it and "›"; the whole row opens it.
-fn tool_row(ui: &mut egui::Ui, kind: Kind) -> egui::Response {
-    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 42.0), egui::Sense::click());
+fn tool_row(ui: &mut egui::Ui, kind: Kind, band: bool) -> egui::Response {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 28.0), egui::Sense::click());
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, kind.title()));
     let visuals = ui.visuals();
     if response.hovered() {
         ui.painter().rect_filled(rect, 6.0, visuals.widgets.hovered.weak_bg_fill);
+    } else if band {
+        ui.painter().rect_filled(rect, 6.0, visuals.faint_bg_color);
     }
     let (text, weak) = (visuals.text_color(), visuals.weak_text_color());
     let body = egui::TextStyle::Body.resolve(ui.style());
-    let small = egui::TextStyle::Small.resolve(ui.style());
-    let left = rect.left() + 10.0;
-    ui.painter().text(egui::pos2(left, rect.center().y - 8.0), egui::Align2::LEFT_CENTER, kind.title(), body.clone(), text);
-    ui.painter().text(egui::pos2(left, rect.center().y + 10.0), egui::Align2::LEFT_CENTER, kind.short(), small, weak);
-    ui.painter().text(egui::pos2(rect.right() - 12.0, rect.center().y), egui::Align2::RIGHT_CENTER, "›", body, weak);
-    ui.painter().hline(rect.x_range(), rect.bottom(), egui::Stroke::new(1.0, crate::theme::of(ui).separator));
+    let y = rect.center().y;
+    // The name in a column of its own, its line beside it, "›" at the right end.
+    ui.painter().text(egui::pos2(rect.left() + 10.0, y), egui::Align2::LEFT_CENTER, kind.title(), body.clone(), text);
+    let line = ui.painter().layout_no_wrap(kind.short().to_string(), body.clone(), weak);
+    let room = rect.right() - 36.0 - (rect.left() + 210.0);
+    if line.size().x <= room {
+        ui.painter().galley(egui::pos2(rect.left() + 210.0, y - line.size().y / 2.0), line, weak);
+    }
+    ui.painter().text(egui::pos2(rect.right() - 12.0, y), egui::Align2::RIGHT_CENTER, "›", body, weak);
     response.on_hover_text(kind.short())
+}
+
+/// The height of a work view's footer: a separator and a row of buttons.
+const FOOTER: f32 = 52.0;
+
+/// Pushes what follows to the bottom of the view, so its footer sits in the same place in every view.
+fn footer_gap(ui: &mut egui::Ui) {
+    let rest = ui.available_height() - FOOTER;
+    if rest > 0.0 {
+        ui.add_space(rest);
+    }
 }
 
 /// The wizard's strip of steps: those done filled, the current one half, the rest empty.
@@ -1029,24 +1053,29 @@ pub fn menu(ui: &mut egui::Ui, state: &mut AppState) -> Dialog {
     let mut picked = None;
     let mut close = false;
     let closed = pane(ui, "toolbox", |ui| {
-        ui.horizontal(|ui| {
-            ui.label(RichText::new("Toolbox").size(17.0).strong());
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                close = ui.add(Button::new("Close").min_size(egui::vec2(80.0, 26.0))).on_hover_text("Close the Toolbox (Esc)").clicked();
-            });
-        });
+        ui.label(RichText::new("Toolbox").size(17.0).strong());
         ui.label(RichText::new("Each tool shows what it would change before anything happens.").weak());
         ui.add_space(4.0);
-        // The tools fill the main area; the list scrolls when the window is short.
-        list(ui, ui.available_height().max(160.0), |ui| {
+        // The tools fill the main area above the footer; the list scrolls when the window is short.
+        list(ui, (ui.available_height() - FOOTER).max(160.0), |ui| {
+            // Rows touch, as in a list, so every tool fits in an ordinary window.
+            ui.spacing_mut().item_spacing.y = 0.0;
             for (title, kinds) in GROUPS {
-                crate::ui::section(ui, title);
-                for &kind in kinds {
-                    if tool_row(ui, kind).clicked() {
+                ui.add_space(10.0);
+                ui.label(RichText::new(title).small().strong().color(ui.visuals().weak_text_color()));
+                ui.add_space(2.0);
+                for (n, &kind) in kinds.iter().enumerate() {
+                    if tool_row(ui, kind, n % 2 == 1).clicked() {
                         picked = Some(kind);
                     }
                 }
             }
+        });
+        footer_gap(ui);
+        ui.separator();
+        ui.add_space(6.0);
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            close = ui.add(Button::new("Close").min_size(egui::vec2(80.0, 26.0))).on_hover_text("Close the Toolbox (Esc)").clicked();
         });
     });
     match picked {
