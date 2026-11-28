@@ -202,6 +202,9 @@ const PICTURE_COLUMN: f32 = 112.0;
 /// The size of the round picture.
 const PICTURE: f32 = 76.0;
 
+/// The width of a phone's country-code dropdown, whatever code it shows, so the number field keeps its edge.
+const CODE_WIDTH: f32 = 76.0;
+
 /// The width of a row's type dropdown.
 const KIND_WIDTH: f32 = 96.0;
 
@@ -325,7 +328,7 @@ fn code_menu(ui: &mut egui::Ui, number: &mut String) {
     let name = format!("Country code: {}", now.as_deref().unwrap_or("none"));
     let combo = egui::ComboBox::from_id_salt("code")
         .selected_text(now.clone().unwrap_or_else(|| "Code".into()))
-        .width(64.0)
+        .width(CODE_WIDTH)
         .height(260.0)
         .show_ui(ui, |ui| {
             for (at, c) in COUNTRIES.iter().enumerate() {

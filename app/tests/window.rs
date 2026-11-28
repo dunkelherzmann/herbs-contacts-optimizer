@@ -1484,6 +1484,9 @@ fn the_editor_matches_its_mockup() {
     harness.get_by_label("+ Add Phone").click();
     harness.run();
     harness.get_by_label("Remove phone 2");
+    // The number fields keep one right edge, whatever code each row's dropdown shows (+34, or none yet).
+    let ends = ["Phone 1", "Phone 2"].map(|name| harness.get_by_role_and_label(egui::Role::TextInput, name).rect().right());
+    assert!((ends[0] - ends[1]).abs() < 0.5, "the number fields end at {ends:?}");
 
     harness.get_by_role_and_label(egui::Role::ComboBox, "Phone type: main");
     harness.get_by_role_and_label(egui::Role::ComboBox, "E-mail type: home");

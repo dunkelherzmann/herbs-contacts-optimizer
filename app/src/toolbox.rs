@@ -554,10 +554,10 @@ impl Step {
                 ui.horizontal(|ui| {
                     ui.label(RichText::new(shown_name(c)).size(16.0).strong());
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        if ui.small_button("Delete").on_hover_text("Delete this contact, after asking, then come back here").clicked() {
+                        if button(ui, "Delete").on_hover_text("Delete this contact, after asking, then come back here").clicked() {
                             delete = Some(at);
                         }
-                        if ui.small_button("Edit").on_hover_text("Open this contact in the editor, then come back here").clicked() {
+                        if button(ui, "Edit").on_hover_text("Open this contact in the editor, then come back here").clicked() {
                             edit = Some(at);
                         }
                     });
@@ -784,12 +784,12 @@ fn line_controls(ui: &mut egui::Ui, kind: Kind, proposal: &mut Proposal, contact
     }
     if contact_buttons {
         parts.push(Box::new(|ui, proposal| {
-            if ui.small_button("Edit").on_hover_text("Open this contact in the editor, then come back here").clicked() {
+            if button(ui, "Edit").on_hover_text("Open this contact in the editor, then come back here").clicked() {
                 *edit = Some(proposal.contacts[0]);
             }
         }));
         parts.push(Box::new(|ui, proposal| {
-            if ui.small_button("Delete").on_hover_text("Delete this contact, after asking, then come back here").clicked() {
+            if button(ui, "Delete").on_hover_text("Delete this contact, after asking, then come back here").clicked() {
                 *delete = Some(proposal.contacts[0]);
             }
         }));
@@ -1108,7 +1108,7 @@ const PREVIEW_HEIGHT: f32 = 170.0;
 
 /// The Preview toggle of a merge; true when it was pressed.
 fn preview_button(ui: &mut egui::Ui, on: &mut bool) -> bool {
-    let pressed = ui.add(Button::new("Preview").small().selected(*on)).on_hover_text("Show the contact this merge would make").clicked();
+    let pressed = ui.add(Button::new("Preview").min_size(BUTTON).selected(*on)).on_hover_text("Show the contact this merge would make").clicked();
     if pressed {
         *on = !*on;
     }
