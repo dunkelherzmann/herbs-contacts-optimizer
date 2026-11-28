@@ -1,7 +1,7 @@
 # Working in Herb's Contacts Optimizer
 
 Notes for coding agents working in this repository: what is particular to this project.
-The spec is `specs.md` (his name for it here); `bugs.md`, `enhancements.md` and `pending.md` are at the root.
+The spec is `SPECIFICATION.md`; `bugs.md` and `enhancements.md` are at the root.
 Changes go through a branch and a pull request. The name is tentative.
 
 ## What it is

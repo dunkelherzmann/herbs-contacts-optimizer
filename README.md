@@ -4,7 +4,7 @@ A desktop app for cleaning up address books. It finds duplicates, merges and rep
 between files and accounts. It runs on macOS, Linux and Windows and is written in Rust.
 
 I build it for my own use and share it as it is. It is a testing app: there is no support, no promise of
-fixes, and parts of it are unfinished. `pending.md` says which.
+fixes, and parts of it are unfinished. `enhancements.md` says which.
 
 ## What it does
 
@@ -45,7 +45,7 @@ The Mac app is signed ad hoc, not notarized. If macOS refuses to open a copy you
 
 ## Where things are
 
-`specs.md` describes the whole app, `pending.md` what is missing, `enhancements.md` and `bugs.md` what was
+`SPECIFICATION.md` describes the whole app, `enhancements.md` and `bugs.md` what was
 asked for and what broke. The code is a Cargo workspace: `core/` holds the contact model, the formats and
 the clean-up rules; `app/` holds the window.
 

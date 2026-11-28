@@ -3,7 +3,7 @@
 A desktop app that cleans up address books: it finds duplicates, merges and repairs contacts, and moves them
 between files and accounts. For macOS, Linux and Windows, written in Rust. The name is tentative.
 
-What is built so far is tracked in `pending.md`; this file describes the whole app.
+What is built so far is tracked in `enhancements.md`; this file describes the whole app.
 
 ## 1. Reference app
 
