@@ -81,7 +81,7 @@ pub fn install(ctx: &egui::Context) {
     #[cfg(target_os = "macos")]
     let font = std::fs::read("/System/Library/Fonts/SFNS.ttf").ok();
     #[cfg(not(target_os = "macos"))]
-    let font = Some(include_bytes!("../assets/Inter-Regular.ttf").to_vec());
+    let font = Some(include_bytes!("../assets/Inter-Variable.ttf").to_vec());
     if let Some(bytes) = font {
         let mut fonts = egui::FontDefinitions::default();
         fonts.font_data.insert("system".into(), egui::FontData::from_owned(bytes).into());
