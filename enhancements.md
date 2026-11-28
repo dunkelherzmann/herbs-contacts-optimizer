@@ -9,6 +9,9 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [ ] Windows (0.2: the same app as one portable `.exe`, built, on the Desktop and seen running; what was not shown is in `windows/pending.md`)
   - Next (plan 2026-11-28): ticked per platform once that platform's `pending.md` has no "Not built" items left and its window has been clicked through with Master Control; it closes last, after the items below.
 - [ ] 2026-11-11 (all platforms): Read and write every known contacts file format. vCard 2.1/3.0/4.0 and CSV in 0.1; the others are in `pending.md`.
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
   - Next (plan 2026-11-28): one PR per format, test-first, in `pending.md` order: CSV column mapping, Windows `.contact`, then the read-only formats. `.pst`/`.ost`/`.msg` are large closed formats and may be noted as not doable rather than built.
 - [ ] 2026-11-11: An About page with version and info, like Herb's Terminal's. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
   - [x] Mac (0.1)
@@ -23,6 +26,9 @@ Requests in the order received. `- [x]` once shipped, with the version.
 - [x] 2026-11-11 (all platforms): Tick boxes left of the name in the list, with tick/untick all; export the ticked contacts to a new file. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Merge several contact files into one. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [ ] 2026-11-11 (all platforms): Convert contact files into other formats. (Mac: vCard 3.0/4.0, Google and Outlook CSV, Excel, LDIF, jCard and xCard in 0.1; the rest are listed in `pending.md`)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
   - Next (plan 2026-11-28): closes with the formats item above; each new writable format comes with a round-trip test.
 - [x] 2026-11-11 (all platforms): Profile pictures on contacts. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Light and dark themes, looking like macOS 27's Finder where possible. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports; the Finder-colour details are still open in `pending.md`.)
@@ -30,6 +36,9 @@ Requests in the order received. `- [x]` once shipped, with the version.
 - [x] 2026-11-11 (all platforms): Edit common fields in bulk for the ticked contacts. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): ⌘A / Ctrl+A selects all. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [ ] 2026-11-11 (all platforms): Common keyboard shortcuts for moving around and editing. (List navigation keys: Mac in 0.1, Linux and Windows in 0.2 with the ports; undo is still open.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
   - Next (plan 2026-11-28): Undo and Redo (⌘Z / ⇧⌘Z, Ctrl+Z / Ctrl+Y) for changes to contacts, test-first, one PR.
 - [x] 2026-11-11 (all platforms): Choose which of the similar contacts to merge into. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
 - [x] 2026-11-11 (all platforms): Go through the wizard or the list one contact at a time. (Done: Mac in 0.1, Linux and Windows in 0.2 with the ports.)
@@ -84,3 +93,65 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [ ] Linux
   - [ ] Windows
   - Next (plan 2026-11-28): one PR that subtracts the account code and its tests, the Accounts menu and dialogs, and every mention of them; the window tests and pictures show no Accounts left; built and installed on all three computers.
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Wizard preview and older backups.** The Wizard's final preview with changed contacts marked, and Restore choosing among older backups. (From `pending.md`.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Country Codes: remember the last country and search it.** Remember the last country between runs; add a search box to the country dropdown. (From `pending.md`.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Similar contacts: names that differ by a typo.** Find similar contacts whose names differ by a typo (spec: Similar contacts). (From `pending.md`.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Text encodings and a can't-hold list.** Text encodings beyond UTF-8, UTF-16 and Latin-1; before exporting, list what the chosen format cannot hold. The formats themselves are in the entry above. (From `pending.md`.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Pictures in HEIC and other kinds.** Profile pictures in HEIC and other kinds beyond those now read. (From `pending.md`.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Logging switch and full Edit and View menus.** A logging switch, and the Edit and View menus in full. (From `pending.md`.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Check the CSV and LDIF formats against real exports.** The Google and Thunderbird CSV column names were written from memory and Outlook's follow Microsoft's template; try a real export from each, a real Thunderbird LDIF file and a workbook made in Excel (the tests use files the app wrote itself and the standards' examples). (From `pending.md`.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac): **Check the light colours against a light Finder window.** The dark colours follow a Finder window captured on macOS 27; the light ones are the system's light colours and no light Finder window was looked at. (From `pending.md`.)
+  - [ ] Mac
+- [ ] 2026-11-28 (Mac, Linux, Windows): **Test dragging over several address books.** Dragging over several address books in the sidebar has no test. (From `pending.md`.)
+  - [ ] Mac
+  - [ ] Linux
+  - [ ] Windows
+- [ ] 2026-11-28 (Mac): **Click through the real Mac window.** The window has only been drawn off screen by the tests and started; click through it, including the question on closing with unsaved changes, which has no test. (From `pending.md`.)
+  - [ ] Mac
+- [ ] 2026-11-28 (Mac): **VoiceOver on the Mac app.** VoiceOver has not been tried. (From `pending.md`.)
+  - [ ] Mac
+- [ ] 2026-11-28 (Linux): **Click through the real window on Linux.** Editor, Wizard, Toolbox, Export, bulk edit, CardDAV accounts, the light theme, dropping a file on the window and the question on closing with unsaved changes were only drawn off screen by the tests; click them through in the installed Flatpak. (From `linux/pending.md`.)
+  - [ ] Linux
+- [ ] 2026-11-28 (Linux): **Linux: screen reader and accessibility.** Assistive tools did not find the window's controls in the Flatpak; try Orca. (From `linux/pending.md`.)
+  - [ ] Linux
+- [ ] 2026-11-28 (Linux): **Linux: try a Wayland session.** The test desktop runs X11; run the app under Wayland. (From `linux/pending.md`.)
+  - [ ] Linux
+- [ ] 2026-11-28 (Linux): **Linux: app-list entry and opening a .vcf from the file manager.** The menu entry and its icon in the desktop's app list were installed but not looked at; opening a `.vcf` from the file manager has not been tried. (From `linux/pending.md`.)
+  - [ ] Linux
+- [ ] 2026-11-28 (Linux): **Linux: aarch64 build.** There is no aarch64 build. (From `linux/pending.md`.)
+  - [ ] Linux
+- [ ] 2026-11-28 (Windows): **Click through the real window on Windows.** Editor, Wizard, Toolbox, Export, bulk edit, CardDAV accounts, the light theme, dropping a file on the window and the question on closing with unsaved changes were only drawn off screen by the tests; click them through in the `.exe`. (From `windows/pending.md`.)
+  - [ ] Windows
+- [ ] 2026-11-28 (Windows): **Windows: look at where the backup lands.** Where the backup of a saved file lands (`%APPDATA%\HerbsContactsOptimizer`) was not looked at. (From `windows/pending.md`.)
+  - [ ] Windows
+- [ ] 2026-11-28 (Windows): **Windows: Narrator.** Narrator has not been tried. (From `windows/pending.md`.)
+  - [ ] Windows
+- [ ] 2026-11-28 (Windows): **Windows: a PC without Direct3D 12 or Vulkan.** Try the app on a PC without Direct3D 12 or Vulkan; it no longer asks for OpenGL (see `bugs.md`). (From `windows/pending.md`.)
+  - [ ] Windows
+- [ ] 2026-11-28 (Windows): **Windows: SmartScreen on another PC.** The `.exe` is not signed, so SmartScreen may warn on another PC; see the platform-rules entry for the install script. (From `windows/pending.md`.)
+  - [ ] Windows
+- [x] 2026-11-28 (Mac, Linux, Windows): **One set of trackers for every platform.** His request: SPECIFICATION.md as the spec, no pending.md; open port items moved into the trackers. In #PR.
+  - [x] Mac
+  - [x] Linux
+  - [x] Windows
