@@ -1447,3 +1447,126 @@ fn work_views_in_the_dark() {
     harness.run();
     picture(&mut harness, "editor-dark.png");
 }
+
+/// The editor as drawn in `design/editor.png`: "−" to remove a row, "+ Add Phone" links, a dropdown
+/// for each row's type, the round picture beside the name fields, and every label above its field
+/// on one left edge.
+#[test]
+fn the_editor_matches_its_mockup() {
+    let mut harness = window(egui::Theme::Light, |state| {
+        state.add_book(sample());
+        state.selected = Some(0);
+        state.edit_contact(false);
+    });
+    harness.run();
+    picture(&mut harness, "editor-ana.png");
+
+    // The type is a dropdown of the usual types, with room for one of your own.
+    harness.get_by_role_and_label(egui::Role::ComboBox, "Phone type: mobile").click();
+    harness.run();
+    harness.get_by_role_and_label(egui::Role::TextInput, "Phone type of your own");
+    harness.get_by_role_and_label(egui::Role::Button, "main").click();
+    harness.run();
+    harness.get_by_role_and_label(egui::Role::ComboBox, "Phone type: main");
+
+    // A row is removed with "−", which screen readers call by what it removes.
+    let remove = harness.get_by_label("Remove phone 2");
+    assert_eq!(remove.accesskit_node().role(), egui::Role::Button);
+    assert!(harness.query_by_label("Remove").is_none(), "no more Remove buttons");
+    remove.click();
+    harness.run();
+    assert!(harness.query_by_label("Remove phone 2").is_none());
+
+    // Rows are added with links.
+    for link in ["+ Add Phone", "+ Add E-mail", "+ Add Address", "+ Add Website"] {
+        assert_eq!(harness.get_by_label(link).accesskit_node().role(), egui::Role::Link, "{link} should be a link");
+    }
+    harness.get_by_label("+ Add Phone").click();
+    harness.run();
+    harness.get_by_label("Remove phone 2");
+
+    harness.get_by_role_and_label(egui::Role::ComboBox, "Phone type: main");
+    harness.get_by_role_and_label(egui::Role::ComboBox, "E-mail type: home");
+    harness.get_by_role_and_label(egui::Role::ComboBox, "Address type: home");
+
+    // The round picture sits beside the name fields, with its button under it.
+    let avatar = harness.get_by_label("The contact's picture").rect();
+    let change = harness.get_by_label("Add Picture…").rect();
+    let first = harness.get_by_role_and_label(egui::Role::TextInput, "First name").rect();
+    assert!((avatar.width() - avatar.height()).abs() < 1.0 && avatar.width() >= 60.0, "a round picture: {avatar:?}");
+    assert!(change.top() > avatar.bottom() && first.left() > avatar.right(), "picture {avatar:?}, button {change:?}, field {first:?}");
+
+    // Labels sit above their fields, on the field's left edge; the rows below share one left edge.
+    for name in ["First name", "Display name", "Street", "Company", "Birthday", "Groups", "Note"] {
+        let label = harness.get_by_role_and_label(egui::Role::Label, name).rect();
+        let role = if name == "Note" { egui::Role::MultilineTextInput } else { egui::Role::TextInput };
+        let field = harness.get_by_role_and_label(role, name).rect();
+        assert!(label.bottom() <= field.top() + 1.0 && (label.left() - field.left()).abs() < 1.5, "{name}: label {label:?}, field {field:?}");
+    }
+    let edge = harness.get_by_role_and_label(egui::Role::Label, "PHONES").rect().left();
+    for (role, name) in [(egui::Role::ComboBox, "E-mail type: home"), (egui::Role::Link, "+ Add Phone"), (egui::Role::TextInput, "Street"), (egui::Role::TextInput, "Company"), (egui::Role::MultilineTextInput, "Note")] {
+        let left = harness.get_by_role_and_label(role, name).rect().left();
+        assert!((left - edge).abs() < 1.5, "{name} starts at {left}, the sections at {edge}");
+    }
+    harness.get_by_label("Save Contact").click();
+    harness.run();
+    let phones = &contacts(&harness)[0].phones;
+    assert_eq!((phones.len(), phones[0].kind.as_str()), (1, "main"), "the new empty row is dropped on save: {phones:?}");
+}
+
+/// Every work view in the main area ends in the same footer: a band across the whole area, of one
+/// height, with standard buttons; the steps' Select All row has buttons of that height too.
+#[test]
+fn every_work_view_has_the_same_footer() {
+    use herbs_contacts_optimizer::toolbox::Kind;
+    let bottom = |harness: &Harness<'_, Option<AppState>>, label: &str| {
+        let rect = harness.get_by_role_and_label(egui::Role::Button, label).rect();
+        (rect.top(), rect.bottom())
+    };
+    let mut harness = window(egui::Theme::Light, |state| {
+        state.add_book(messy());
+        state.open_toolbox();
+    });
+    harness.run();
+    let toolbox = bottom(&harness, "Close");
+    harness.get_by_label(Kind::Merging.title()).click();
+    harness.run();
+    assert_eq!(bottom(&harness, "Close"), toolbox, "the step's footer should be where the Toolbox's is");
+    let tall = harness.get_by_role_and_label(egui::Role::Button, "Close").rect().height();
+    for label in ["Select All", "Deselect All", "One at a Time"] {
+        let height = harness.get_by_role_and_label(egui::Role::Button, label).rect().height();
+        assert!((height - tall).abs() < 0.5, "{label} is {height} tall, the footer's buttons {tall}");
+    }
+
+    // One line to merge: the preview follows the line, with no empty band between them.
+    harness.get_by_label("Preview").click();
+    harness.run();
+    let line = harness.get_by_role_and_label(egui::Role::CheckBox, "bob stone").rect();
+    let preview = harness.get_by_label("MERGED CONTACT, FROM 2").rect();
+    picture(&mut harness, "merge-preview-one-line.png");
+    assert!(preview.top() - line.bottom() < 40.0, "a band between the line {line:?} and the preview {preview:?}");
+
+    harness.key_press(egui::Key::Escape);
+    harness.run();
+    harness.state_mut().as_mut().unwrap().open_wizard();
+    harness.run();
+    assert_eq!(bottom(&harness, "Start"), toolbox, "the wizard's footer should be where the Toolbox's is");
+    let height = harness.get_by_role_and_label(egui::Role::Button, "Select All").rect().height();
+    assert!((height - tall).abs() < 0.5, "the wizard's Select All is {height} tall");
+    harness.get_by_label("Start").click();
+    harness.run();
+    assert_eq!(bottom(&harness, "Skip"), toolbox, "a wizard step's footer should be where the Toolbox's is");
+    harness.get_by_label("Cancel Wizard").click();
+    harness.run();
+    harness.state_mut().as_mut().unwrap().open_wizard();
+    harness.run();
+    harness.get_by_label("Deselect All").click();
+    harness.run();
+    harness.get_by_role_and_label(egui::Role::CheckBox, "Simplify Numbers").click();
+    harness.run();
+    harness.get_by_label("Start").click();
+    harness.run();
+    harness.get_by_label("Skip").click();
+    harness.run();
+    assert_eq!(bottom(&harness, "Done"), toolbox, "the summary's footer should be where the Toolbox's is");
+}

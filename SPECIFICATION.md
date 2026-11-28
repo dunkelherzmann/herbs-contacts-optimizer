@@ -298,7 +298,10 @@ Save.
 
 The editor (Edit in the contact's panel, Main Menu → Edit → Edit Contact, or New Contact, ⌘N) opens in the
 contact's panel, not as a dialog, and is a form over a copy of the contact: name parts, phones, e-mails, addresses, organization, websites, birthday, anniversary,
-groups and note, and the picture: Add or Change Picture takes a JPEG, PNG or GIF file and keeps it byte for
+groups and note, and the picture. The round picture (or the contact's initials) stands at the left of the name
+fields, each label above its field. Each phone, e-mail, address and website row has its type as a dropdown of
+the usual types, with a field at its foot for a type of your own, and "−" at its end to remove it; "+ Add Phone"
+and the like add a row. Add or Change Picture takes a JPEG, PNG or GIF file and keeps it byte for
 byte; Remove Picture takes it off. The contact's panel shows the picture above the name. Pictures are read
 from and written to vCard files of every version; a picture that is only a web address stays as it is.
 Save Contact keeps the changes; Cancel or Esc drops them. Delete Contact (⌫) asks first, with Cancel

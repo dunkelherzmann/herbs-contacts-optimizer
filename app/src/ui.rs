@@ -1480,7 +1480,8 @@ pub(crate) fn pane(ui: &mut egui::Ui, id: &'static str, add: impl FnOnce(&mut eg
 pub(crate) fn list(ui: &mut egui::Ui, height: f32, add: impl FnOnce(&mut egui::Ui)) {
     ui.allocate_ui_with_layout(egui::vec2(ui.available_width(), height), Layout::top_down(Align::Min), |ui| {
         ui.set_height(height);
-        egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
+        // Exactly this height, even below the scroll area's own minimum of 64 points.
+        egui::ScrollArea::vertical().auto_shrink(false).min_scrolled_height(height).show(ui, |ui| {
             ui.set_width(ui.available_width());
             add(ui);
         });

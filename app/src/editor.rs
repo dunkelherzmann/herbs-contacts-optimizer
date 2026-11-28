@@ -52,71 +52,70 @@ impl Editor {
             ui.add_space(6.0);
             list(ui, ui.available_height().max(160.0), |ui| {
                 let c = &mut self.draft;
-                section(ui, "PICTURE");
-                ui.horizontal(|ui| {
-                    ui.add_space(LABEL + 8.0);
-                    if let Some(texture) = c.photo.as_ref().and_then(|photo| state.picture(ui.ctx(), photo)) {
-                        ui.add(egui::Image::new(&texture).fit_to_exact_size(egui::vec2(64.0, 64.0)).corner_radius(8).alt_text("The contact's picture"));
-                    }
-                    let label = if c.photo.is_some() { "Change Picture…" } else { "Add Picture…" };
-                    if ui.button(label).on_hover_text("Choose a JPEG or PNG file as this contact's picture").clicked() {
-                        choose = true;
-                    }
-                    if c.photo.is_some() && ui.button("Remove Picture").on_hover_text("Take the picture off this contact").clicked() {
-                        c.photo = None;
-                    }
+                // The round picture with its buttons at the left, the name fields beside it.
+                ui.horizontal_top(|ui| {
+                    ui.allocate_ui_with_layout(egui::vec2(PICTURE_COLUMN, 0.0), Layout::top_down(Align::Center), |ui| {
+                        ui.set_width(PICTURE_COLUMN);
+                        ui.add_space(4.0);
+                        avatar(ui, state, c);
+                        ui.add_space(4.0);
+                        let label = if c.photo.is_some() { "Change Picture…" } else { "Add Picture…" };
+                        if ui.add(Button::new(label).min_size(egui::vec2(PICTURE_COLUMN, 0.0))).on_hover_text("Choose a JPEG or PNG file as this contact's picture").clicked() {
+                            choose = true;
+                        }
+                        if c.photo.is_some() && ui.add(Button::new("Remove Picture").min_size(egui::vec2(PICTURE_COLUMN, 0.0))).on_hover_text("Take the picture off this contact").clicked() {
+                            c.photo = None;
+                        }
+                    });
+                    ui.add_space(12.0);
+                    ui.vertical(|ui| {
+                        field(ui, "Prefix", &mut c.prefix);
+                        field(ui, "First name", &mut c.first);
+                        field(ui, "Middle name", &mut c.middle);
+                        field(ui, "Last name", &mut c.last);
+                        field(ui, "Suffix", &mut c.suffix);
+                        field(ui, "Nickname", &mut c.nickname);
+                        field(ui, "Display name", &mut c.display_name);
+                        ui.add_space(4.0);
+                        ui.horizontal(|ui| {
+                            let can_flatten = !c.middle.trim().is_empty() || !c.last.trim().is_empty();
+                            if ui.add_enabled(can_flatten, Button::new("Flatten"))
+                                .on_hover_text("Put the first, middle and last names on one line in First name, and empty the middle and last")
+                                .clicked()
+                            {
+                                c.flatten_name();
+                            }
+                            let can_split = c.first.split_whitespace().count() >= 2;
+                            if ui.add_enabled(can_split, Button::new("Split"))
+                                .on_hover_text("Split the First name field into first, middle and last — look it over, as unusual names won't always split right")
+                                .clicked()
+                            {
+                                c.split_name();
+                            }
+                        });
+                    });
                 });
                 if !self.picture_error.is_empty() {
-                    ui.horizontal(|ui| {
-                        ui.add_space(LABEL + 8.0);
-                        ui.colored_label(crate::theme::of(ui).danger, self.picture_error.as_str());
-                    });
+                    ui.colored_label(crate::theme::of(ui).danger, self.picture_error.as_str());
                 }
-                section(ui, "NAME");
-                field(ui, "Name prefix", &mut c.prefix);
-                field(ui, "First name", &mut c.first);
-                field(ui, "Middle name", &mut c.middle);
-                field(ui, "Last name", &mut c.last);
-                field(ui, "Name suffix", &mut c.suffix);
-                field(ui, "Display name", &mut c.display_name);
-                field(ui, "Nickname", &mut c.nickname);
-                ui.horizontal(|ui| {
-                    ui.add_space(LABEL + 8.0);
-                    let can_flatten = !c.middle.trim().is_empty() || !c.last.trim().is_empty();
-                    if ui.add_enabled(can_flatten, Button::new("Flatten"))
-                        .on_hover_text("Put the first, middle and last names on one line in First name, and empty the middle and last")
-                        .clicked()
-                    {
-                        c.flatten_name();
-                    }
-                    let can_split = c.first.split_whitespace().count() >= 2;
-                    if ui.add_enabled(can_split, Button::new("Split"))
-                        .on_hover_text("Split the First name field into first, middle and last — look it over, as unusual names won't always split right")
-                        .clicked()
-                    {
-                        c.split_name();
-                    }
-                });
 
-                typed_rows(ui, "PHONES", "phone", &mut c.phones);
+                typed_rows(ui, "PHONES", "Phone", &mut c.phones);
                 if c.phones.iter().any(|p| hco_core::countries::lacks_country_code(&p.value)) {
-                    ui.horizontal(|ui| {
-                        ui.add_space(LABEL + 8.0);
-                        ui.add(Label::new(RichText::new("A number without a country code: pick its country at the right, or type the code in front (+34…).").small().weak()).wrap());
-                    });
+                    ui.add(Label::new(RichText::new("A number without a country code: pick its country at the right, or type the code in front (+34…).").small().weak()).wrap());
                 }
-                typed_rows(ui, "E-MAILS", "e-mail", &mut c.emails);
+                typed_rows(ui, "E-MAILS", "E-mail", &mut c.emails);
 
                 section(ui, "ADDRESSES");
                 let mut remove = None;
                 for (n, a) in c.addresses.iter_mut().enumerate() {
                     ui.push_id(("address", n), |ui| {
                         ui.horizontal(|ui| {
-                            ui.add_space(LABEL + 8.0);
-                            ui.add(TextEdit::singleline(&mut a.kind).hint_text("type").desired_width(90.0)).on_hover_text("What this address is: home, work…");
-                            if ui.button("Remove").on_hover_text("Remove this address").clicked() {
-                                remove = Some(n);
-                            }
+                            kind_menu(ui, "Address", &mut a.kind);
+                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                if remove_button(ui, "Address", n) {
+                                    remove = Some(n);
+                                }
+                            });
                         });
                         field(ui, "Street", &mut a.street);
                         field(ui, "Apartment, suite", &mut a.extended);
@@ -131,23 +130,21 @@ impl Editor {
                 if let Some(n) = remove {
                     c.addresses.remove(n);
                 }
-                add_button(ui, "Add address", || c.addresses.push(Address::default()));
+                add_link(ui, "Address", || c.addresses.push(Address { kind: "home".into(), ..Address::default() }));
 
                 section(ui, "ORGANIZATION");
                 field(ui, "Company", &mut c.company);
                 field(ui, "Department", &mut c.department);
                 field(ui, "Title", &mut c.title);
 
-                typed_rows(ui, "WEBSITES", "website", &mut c.websites);
+                typed_rows(ui, "WEBSITES", "Website", &mut c.websites);
 
                 section(ui, "OTHER DETAILS");
                 field(ui, "Birthday", &mut c.birthday);
                 field(ui, "Anniversary", &mut c.anniversary);
                 field(ui, "Groups", &mut self.groups);
-                ui.horizontal_top(|ui| {
-                    let label = ui.add_sized([LABEL, 22.0], Label::new(RichText::new("Note").weak()).halign(Align::RIGHT));
-                    ui.add(TextEdit::multiline(&mut c.note).desired_rows(3).desired_width(f32::INFINITY)).labelled_by(label.id);
-                });
+                let label = ui.label(RichText::new("Note").weak());
+                ui.add(TextEdit::multiline(&mut c.note).desired_rows(3).desired_width(f32::INFINITY)).labelled_by(label.id);
             });
         });
         if choose {
@@ -199,42 +196,116 @@ impl Editor {
     }
 }
 
-const LABEL: f32 = 118.0;
+/// The width of the column the picture and its buttons stand in, at the left of the name fields.
+const PICTURE_COLUMN: f32 = 112.0;
 
-/// A labelled one-line text field; the label is also the field's name for screen readers.
+/// The size of the round picture.
+const PICTURE: f32 = 76.0;
+
+/// The width of a row's type dropdown.
+const KIND_WIDTH: f32 = 96.0;
+
+/// The contact's picture in a circle, or a circle with its initials when it has none.
+fn avatar(ui: &mut egui::Ui, state: &mut AppState, c: &Contact) {
+    let size = egui::vec2(PICTURE, PICTURE);
+    if let Some(texture) = c.photo.as_ref().and_then(|photo| state.picture(ui.ctx(), photo)) {
+        ui.add(egui::Image::new(&texture).fit_to_exact_size(size).corner_radius(PICTURE / 2.0).alt_text("The contact's picture"));
+        return;
+    }
+    let (rect, response) = ui.allocate_exact_size(size, egui::Sense::hover());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, "The contact's picture"));
+    let palette = crate::theme::of(ui);
+    ui.painter().circle_filled(rect.center(), PICTURE / 2.0, palette.capsule);
+    let font = egui::FontId::proportional(PICTURE * 0.4);
+    ui.painter().text(rect.center(), egui::Align2::CENTER_CENTER, initials(c), font, palette.secondary);
+}
+
+/// Up to two capital letters for a contact: the first of its first and last names, or of the
+/// first two words of the name it shows.
+fn initials(c: &Contact) -> String {
+    let named: Vec<&str> = [c.first.as_str(), c.last.as_str()].into_iter().filter(|p| !p.trim().is_empty()).collect();
+    let name = c.name();
+    let words: Vec<&str> = if named.is_empty() { name.split_whitespace().take(2).collect() } else { named };
+    words.iter().filter_map(|w| w.trim().chars().next()).flat_map(char::to_uppercase).collect()
+}
+
+/// A labelled one-line text field, the label above it on the same left edge; the label is also
+/// the field's name for screen readers.
 fn field(ui: &mut egui::Ui, label: &str, value: &mut String) {
-    ui.horizontal(|ui| {
-        let label = ui.add_sized([LABEL, 22.0], Label::new(RichText::new(label).weak()).halign(Align::RIGHT));
-        ui.add(TextEdit::singleline(value).desired_width(f32::INFINITY)).labelled_by(label.id);
-    });
+    let spacing = ui.spacing().item_spacing.y;
+    ui.spacing_mut().item_spacing.y = 2.0;
+    let label = ui.label(RichText::new(label).weak());
+    ui.spacing_mut().item_spacing.y = spacing;
+    ui.add(TextEdit::singleline(value).desired_width(f32::INFINITY)).labelled_by(label.id);
 }
 
-fn add_button(ui: &mut egui::Ui, label: &str, add: impl FnOnce()) {
-    ui.horizontal(|ui| {
-        ui.add_space(LABEL + 8.0);
-        if ui.button(label).clicked() {
-            add();
-        }
-    });
+/// "+ Add Phone" and the like: a link that adds an empty row.
+fn add_link(ui: &mut egui::Ui, noun: &str, add: impl FnOnce()) {
+    if ui.link(format!("+ Add {noun}")).on_hover_text(format!("Add another {}", noun.to_lowercase())).clicked() {
+        add();
+    }
 }
 
-/// Rows of type and value (phones, e-mails, websites) with Remove on each and an Add button.
+/// The "−" at the end of a row; true when it was pressed. Screen readers hear what it removes.
+fn remove_button(ui: &mut egui::Ui, noun: &str, n: usize) -> bool {
+    let name = format!("Remove {} {}", noun.to_lowercase(), n + 1);
+    let response = ui.add(Button::new("−").min_size(egui::vec2(28.0, 0.0)));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, name.as_str()));
+    response.on_hover_text(format!("Remove this {}", noun.to_lowercase())).clicked()
+}
+
+/// The usual types for each kind of row, offered in its dropdown.
+fn kinds(noun: &str) -> &'static [&'static str] {
+    match noun {
+        "Phone" => &["mobile", "home", "work", "main", "home fax", "work fax", "pager", "other"],
+        "Website" => &["homepage", "home", "work", "blog", "other"],
+        _ => &["home", "work", "other"],
+    }
+}
+
+/// A row's type as a dropdown of the usual types, with a field at its foot for a type of your own.
+fn kind_menu(ui: &mut egui::Ui, noun: &str, kind: &mut String) {
+    let shown = if kind.trim().is_empty() { "none".to_string() } else { kind.clone() };
+    let name = format!("{noun} type: {shown}");
+    let combo = egui::ComboBox::from_id_salt("kind")
+        .selected_text(if kind.trim().is_empty() { RichText::new("type").weak() } else { RichText::new(kind.as_str()) })
+        .width(KIND_WIDTH)
+        .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+        .show_ui(ui, |ui| {
+            for &usual in kinds(noun) {
+                if ui.selectable_label(kind.as_str() == usual, usual).clicked() {
+                    *kind = usual.to_string();
+                    ui.close();
+                }
+            }
+            ui.separator();
+            let own = ui.add(TextEdit::singleline(kind).hint_text("Other type").desired_width(KIND_WIDTH + 20.0));
+            own.widget_info(|| egui::WidgetInfo::labeled(egui::Role::TextInput, true, format!("{noun} type of your own")));
+            if own.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                ui.close();
+            }
+        });
+    combo.response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, name.as_str()));
+    combo.response.on_hover_text(format!("What this {} is: {}, or a type of your own", noun.to_lowercase(), kinds(noun).join(", ")));
+}
+
+/// Rows of type and value (phones, e-mails, websites) with "−" on each and a link to add one.
 fn typed_rows(ui: &mut egui::Ui, title: &str, noun: &str, list: &mut Vec<Typed>) {
     section(ui, title);
     let mut remove = None;
     for (n, item) in list.iter_mut().enumerate() {
         ui.push_id((noun, n), |ui| {
             ui.horizontal(|ui| {
-                ui.add_space(LABEL - 90.0);
-                ui.add(TextEdit::singleline(&mut item.kind).hint_text("type").desired_width(82.0)).on_hover_text(format!("What this {noun} is: home, work, mobile…"));
+                kind_menu(ui, noun, &mut item.kind);
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui.button("Remove").on_hover_text(format!("Remove this {noun}")).clicked() {
+                    if remove_button(ui, noun, n) {
                         remove = Some(n);
                     }
-                    if noun == "phone" {
+                    if noun == "Phone" {
                         code_menu(ui, &mut item.value);
                     }
-                    ui.add(TextEdit::singleline(&mut item.value).hint_text(noun.to_string()).desired_width(f32::INFINITY));
+                    let value = ui.add(TextEdit::singleline(&mut item.value).hint_text(noun.to_lowercase()).desired_width(f32::INFINITY));
+                    value.widget_info(|| egui::WidgetInfo::labeled(egui::Role::TextInput, true, format!("{noun} {}", n + 1)));
                 });
             });
         });
@@ -242,7 +313,7 @@ fn typed_rows(ui: &mut egui::Ui, title: &str, noun: &str, list: &mut Vec<Typed>)
     if let Some(n) = remove {
         list.remove(n);
     }
-    add_button(ui, &format!("Add {noun}"), || list.push(Typed::default()));
+    add_link(ui, noun, || list.push(Typed::new(kinds(noun)[0], "")));
 }
 
 /// The country code of a phone number as a dropdown: shows the code the number has, and puts the

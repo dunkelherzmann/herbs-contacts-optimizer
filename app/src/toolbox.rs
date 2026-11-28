@@ -505,16 +505,16 @@ impl Step {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     if !book.contacts.is_empty() {
                         let label = if self.one_at_a_time { "Show the List" } else { "One at a Time" };
-                        if ui.small_button(label).on_hover_text("Go through every contact one by one, or see the list of what the step found").clicked() {
+                        if button(ui, label).on_hover_text("Go through every contact one by one, or see the list of what the step found").clicked() {
                             self.one_at_a_time = !self.one_at_a_time;
                             self.at = 0;
                         }
                     }
                     if ticks && found > 0 {
-                        if ui.small_button("Deselect All").on_hover_text("Untick every line").clicked() {
+                        if button(ui, "Deselect All").on_hover_text("Untick every line").clicked() {
                             self.proposals.iter_mut().for_each(|p| p.ticked = false);
                         }
-                        if ui.small_button("Select All").on_hover_text("Tick every line").clicked() {
+                        if button(ui, "Select All").on_hover_text("Tick every line").clicked() {
                             self.proposals.iter_mut().for_each(|p| p.ticked = true);
                         }
                     }
@@ -623,10 +623,11 @@ impl Step {
                     self.at = (at as i64 + go).clamp(0, total as i64 - 1) as usize;
                 }
             } else {
-                // The list takes the room the main area has left above the preview and the buttons.
-                // The list as tall as its lines, up to the room left above the preview and the footer.
+                // The list as tall as its lines (room for "Nothing found" when it has none), up to the
+                // room left above the preview and the footer; the preview follows the last line.
                 let room = ui.available_height() - FOOTER - if self.preview_set(&book.contacts).is_some() { PREVIEW_HEIGHT + 40.0 } else { 0.0 };
-                let height = (len.max(2) as f32 * 32.0).min(room.max(120.0));
+                let sets = self.proposals.last().map_or(0, |p| p.set);
+                let height = if len == 0 { 64.0 } else { len as f32 * 32.0 + sets as f32 * 8.0 }.min(room.max(120.0));
                 let mut previewed = self.preview;
                 list(ui, height, |ui| {
                     if self.proposals.is_empty() {
@@ -661,29 +662,24 @@ impl Step {
             if let Some(set) = self.preview_set(&book.contacts) {
                 merged_preview(ui, &book.contacts, &set);
             }
-            footer_gap(ui);
-            ui.separator();
-            ui.add_space(6.0);
-            ui.horizontal(|ui| {
-                let size = egui::vec2(80.0, 26.0);
-                if in_wizard {
-                    back = ui.add(Button::new("Cancel Wizard").min_size(size)).on_hover_text("Stop here and undo everything the wizard changed").clicked();
+            footer(ui, |ui| {
+                if ticks {
+                    let mut action = Button::new(self.button()).min_size(BUTTON);
+                    if self.kind.deletes() && self.ready() {
+                        action = Button::new(RichText::new(self.button()).color(Color32::WHITE)).fill(crate::theme::of(ui).danger).min_size(BUTTON);
+                    }
+                    apply = ui.add_enabled(self.ready(), action).on_hover_text("Do this to the ticked lines. The file changes only when you save.").clicked();
                 }
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ticks {
-                        let mut button = Button::new(self.button()).min_size(size);
-                        if self.kind.deletes() && self.ready() {
-                            button = Button::new(RichText::new(self.button()).color(Color32::WHITE)).fill(crate::theme::of(ui).danger).min_size(size);
-                        }
-                        apply = ui.add_enabled(self.ready(), button).on_hover_text("Do this to the ticked lines. The file changes only when you save.").clicked();
-                    }
-                    if in_wizard {
-                        let label = if ticks { "Skip" } else { "Next" };
-                        skip = ui.add(Button::new(label).min_size(size)).on_hover_text("Go to the next step and leave these contacts as they are").clicked();
-                    } else {
-                        close = ui.add(Button::new("Close").min_size(size)).on_hover_text("Leave everything as it is (Esc)").clicked();
-                    }
-                });
+                if in_wizard {
+                    let label = if ticks { "Skip" } else { "Next" };
+                    skip = button(ui, label).on_hover_text("Go to the next step and leave these contacts as they are").clicked();
+                    // Cancel Wizard at the far left, away from the buttons that go on.
+                    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                        back = button(ui, "Cancel Wizard").on_hover_text("Stop here and undo everything the wizard changed").clicked();
+                    });
+                } else {
+                    close = button(ui, "Close").on_hover_text("Leave everything as it is (Esc)").clicked();
+                }
             });
         });
 
@@ -903,14 +899,10 @@ impl Wizard {
                     });
                 }
             });
-            footer_gap(ui);
-            ui.separator();
-            ui.add_space(6.0);
-            ui.horizontal(|ui| {
-                let size = egui::vec2(80.0, 26.0);
-                undo = ui.add(Button::new("Undo All").min_size(size)).on_hover_text("Put every contact back as it was before the wizard").clicked();
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    done = ui.add(Button::new("Done").min_size(size)).on_hover_text("Keep the changes (Esc or Return)").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter));
+            footer(ui, |ui| {
+                done = button(ui, "Done").on_hover_text("Keep the changes (Esc or Return)").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter));
+                ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                    undo = button(ui, "Undo All").on_hover_text("Put every contact back as it was before the wizard").clicked();
                 });
             });
         });
@@ -942,33 +934,35 @@ pub fn choose_steps(mut steps: Vec<(Kind, bool)>, ui: &mut egui::Ui, state: &mut
             let on = steps.iter().filter(|(_, ticked)| *ticked).count();
             ui.label(RichText::new(format!("{on} of {} selected", steps.len())).small().weak());
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                if ui.small_button("Deselect All").on_hover_text("Untick every step").clicked() {
+                if button(ui, "Deselect All").on_hover_text("Untick every step").clicked() {
                     steps.iter_mut().for_each(|(_, ticked)| *ticked = false);
                 }
-                if ui.small_button("Select All").on_hover_text("Tick every step").clicked() {
+                if button(ui, "Select All").on_hover_text("Tick every step").clicked() {
                     steps.iter_mut().for_each(|(_, ticked)| *ticked = true);
                 }
             });
         });
         ui.separator();
-        for (kind, ticked) in &mut steps {
-            ui.horizontal(|ui| {
-                // The name in a column of its own, its line beside it.
-                ui.allocate_ui_with_layout(egui::vec2(220.0, 24.0), Layout::left_to_right(Align::Center), |ui| {
-                    ui.set_width(220.0);
+        // Rows touch, every other one on a faint band, as in the Toolbox.
+        ui.spacing_mut().item_spacing.y = 0.0;
+        for (n, (kind, ticked)) in steps.iter_mut().enumerate() {
+            let (rect, _) = ui.allocate_exact_size(egui::vec2(ui.available_width(), ROW), egui::Sense::hover());
+            if n % 2 == 1 {
+                ui.painter().rect_filled(rect, 6.0, ui.visuals().faint_bg_color);
+            }
+            ui.scope_builder(egui::UiBuilder::new().max_rect(rect.shrink2(egui::vec2(10.0, 0.0))).layout(Layout::left_to_right(Align::Center)), |ui| {
+                // The name in a column of its own, its line beside it, as in the Toolbox.
+                ui.allocate_ui_with_layout(egui::vec2(NAME_COLUMN - 10.0, ROW), Layout::left_to_right(Align::Center), |ui| {
+                    ui.set_width(NAME_COLUMN - 10.0);
                     ui.checkbox(ticked, kind.title());
                 });
                 ui.add(Label::new(RichText::new(kind.short()).weak()).truncate());
             });
         }
-        footer_gap(ui);
-        ui.separator();
-        ui.add_space(6.0);
-        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            let size = egui::vec2(80.0, 26.0);
+        footer(ui, |ui| {
             let any = steps.iter().any(|(_, ticked)| *ticked);
-            start = ui.add_enabled(any, Button::new("Start").min_size(size)).on_hover_text("Begin with the first ticked step").clicked();
-            cancel = ui.add(Button::new("Cancel").min_size(size)).on_hover_text("Close the wizard (Esc)").clicked();
+            start = ui.add_enabled(any, Button::new("Start").min_size(BUTTON)).on_hover_text("Begin with the first ticked step").clicked();
+            cancel = button(ui, "Cancel").on_hover_text("Close the wizard (Esc)").clicked();
         });
     });
     if start {
@@ -985,9 +979,20 @@ pub fn choose_steps(mut steps: Vec<(Kind, bool)>, ui: &mut egui::Ui, state: &mut
     }
 }
 
+/// The height of a row in the Toolbox and in the wizard's list of steps.
+const ROW: f32 = 28.0;
+
+/// Where a row's line starts, after the column of names.
+const NAME_COLUMN: f32 = 210.0;
+
+/// A group's name over its rows: small capitals in the secondary colour, semibold.
+pub(crate) fn group_header(ui: &mut egui::Ui, title: &str) -> egui::Response {
+    ui.label(RichText::new(title).small().variation("wght", 600.0).color(ui.visuals().weak_text_color()))
+}
+
 /// One tool in the Toolbox: its name, a line about it and "›"; the whole row opens it.
 fn tool_row(ui: &mut egui::Ui, kind: Kind, band: bool) -> egui::Response {
-    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 28.0), egui::Sense::click());
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), ROW), egui::Sense::click());
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, kind.title()));
     let visuals = ui.visuals();
     if response.hovered() {
@@ -1001,23 +1006,35 @@ fn tool_row(ui: &mut egui::Ui, kind: Kind, band: bool) -> egui::Response {
     // The name in a column of its own, its line beside it, "›" at the right end.
     ui.painter().text(egui::pos2(rect.left() + 10.0, y), egui::Align2::LEFT_CENTER, kind.title(), body.clone(), text);
     let line = ui.painter().layout_no_wrap(kind.short().to_string(), body.clone(), weak);
-    let room = rect.right() - 36.0 - (rect.left() + 210.0);
+    let room = rect.right() - 36.0 - (rect.left() + NAME_COLUMN);
     if line.size().x <= room {
-        ui.painter().galley(egui::pos2(rect.left() + 210.0, y - line.size().y / 2.0), line, weak);
+        ui.painter().galley(egui::pos2(rect.left() + NAME_COLUMN, y - line.size().y / 2.0), line, weak);
     }
     ui.painter().text(egui::pos2(rect.right() - 12.0, y), egui::Align2::RIGHT_CENTER, "›", body, weak);
     response.on_hover_text(kind.short())
 }
 
-/// The height of a work view's footer: a separator and a row of buttons.
+/// The room a work view's footer takes at the foot of the main area.
 const FOOTER: f32 = 52.0;
 
-/// Pushes what follows to the bottom of the view, so its footer sits in the same place in every view.
-fn footer_gap(ui: &mut egui::Ui) {
-    let rest = ui.available_height() - FOOTER;
-    if rest > 0.0 {
-        ui.add_space(rest);
-    }
+/// The size of every button in a work view: the footer's, and the Select All row's above a list.
+pub(crate) const BUTTON: egui::Vec2 = egui::vec2(80.0, 26.0);
+
+/// A button of the standard work-view size.
+fn button(ui: &mut egui::Ui, text: impl Into<egui::WidgetText>) -> egui::Response {
+    ui.add(Button::new(text).min_size(BUTTON))
+}
+
+/// A work view's footer: a band across the whole main area at its foot, the same height in every
+/// view, with a line along its top and the buttons in a row in its middle (laid out right to left).
+fn footer(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui)) {
+    // The main area's own edges (the panel's clip), not the margin its content keeps.
+    let (area, inner) = (ui.clip_rect(), ui.max_rect());
+    let top = inner.bottom() - FOOTER;
+    let band = egui::Rect::from_min_max(egui::pos2(area.left(), top), area.max);
+    ui.painter().hline(band.x_range(), top, egui::Stroke::new(1.0, crate::theme::of(ui).separator));
+    let row = egui::Rect::from_center_size(egui::pos2(inner.center().x, band.center().y), egui::vec2(inner.width(), BUTTON.y));
+    ui.scope_builder(egui::UiBuilder::new().max_rect(row).layout(Layout::right_to_left(Align::Center)), add);
 }
 
 /// The wizard's strip of steps: those done filled, the current one half, the rest empty.
@@ -1062,7 +1079,7 @@ pub fn menu(ui: &mut egui::Ui, state: &mut AppState) -> Dialog {
             ui.spacing_mut().item_spacing.y = 0.0;
             for (title, kinds) in GROUPS {
                 ui.add_space(10.0);
-                ui.label(RichText::new(title).small().strong().color(ui.visuals().weak_text_color()));
+                group_header(ui, title);
                 ui.add_space(2.0);
                 for (n, &kind) in kinds.iter().enumerate() {
                     if tool_row(ui, kind, n % 2 == 1).clicked() {
@@ -1071,11 +1088,8 @@ pub fn menu(ui: &mut egui::Ui, state: &mut AppState) -> Dialog {
                 }
             }
         });
-        footer_gap(ui);
-        ui.separator();
-        ui.add_space(6.0);
-        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            close = ui.add(Button::new("Close").min_size(egui::vec2(80.0, 26.0))).on_hover_text("Close the Toolbox (Esc)").clicked();
+        footer(ui, |ui| {
+            close = button(ui, "Close").on_hover_text("Close the Toolbox (Esc)").clicked();
         });
     });
     match picked {

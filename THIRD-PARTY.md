@@ -8,5 +8,5 @@
 
 `scripts/countries.py` makes the file from the two sources.
 
-- The Linux and Windows versions carry the Inter font (`app/assets/Inter-Regular.ttf`), © The Inter Project
+- The Linux and Windows versions carry the Inter font, version 4.001 with all its weights (`app/assets/Inter-Variable.ttf`), © The Inter Project
   Authors, SIL Open Font License 1.1 (github.com/rsms/inter; the licence is `app/assets/Inter-LICENSE.txt`).
