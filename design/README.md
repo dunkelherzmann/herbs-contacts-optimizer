@@ -13,9 +13,8 @@ Settled: ☰ Main Menu stays first at the left of the toolbar (his request for t
 right-end convention); each system keeps its own separate title bar; Copy To / Move To are in both the
 ticked-contacts bar and ☰ Edit; the wizard's final preview comes before the summary.
 
-**Proposal awaiting Herbert's yes:** the Toolbox steps, the wizard and the editor open in the main area beside
-the sidebar instead of as dialogs over a dimmed window (`toolbox`, `toolbox-step`, `wizard-*`, `editor`). If he says no,
-they stay dialogs as today and only their contents change as drawn.
+**Approved by Herbert (2026-11-28):** the Toolbox, its steps, the wizard and the editor open in the main area beside
+the sidebar instead of as dialogs over a dimmed window (`toolbox`, `toolbox-step`, `wizard-*`, `editor`).
 
 | Mockup | What it borrows, and from where | What differs from the window today |
 |---|---|---|
@@ -23,13 +22,13 @@ they stay dialogs as today and only their contents change as drawn.
 | `empty.png` | Thunderbird's empty-book placeholder | no "Add an account…"; the line names more formats |
 | `filters.png` | Thunderbird keeps search above the list; the filter rows are the app's own (spec 3.2) | "Remove" becomes "−"; Done at the bar's right end; "No contact selected" in the details pane (the one match, Dana Müller, has no e-mail address) |
 | `copy-to.png` | reference app's copy targets, Outlook's Move | new (queued request); one even veil over the whole window, details pane included, lighter than today's dim |
-| `toolbox.png` | the reference app's toolbox screen; grouped list rows | proposal: a list in the main area, one row per tool with its line and "›", instead of a dialog of wide buttons |
-| `toolbox-step.png` | ContactsMate (choose the card to keep, compare before merging); GNOME and Thunderbird edit in the pane | proposal: in the main area instead of a dialog over a dimmed window; "‹ Toolbox" to go back; Delete in red; pictures on lines |
-| `wizard-start.png` | the reference app's wizard step chooser | proposal: in the main area; empty progress strip; Cancel and Start at the right |
-| `wizard-step.png` | reference app's step-by-step wizard | proposal: in the main area; progress strip; one value per line, the one the contacts share; Delete Contacts in red |
+| `toolbox.png` | the reference app's toolbox screen; grouped list rows | approved: a list in the main area, one row per tool with its line and "›", instead of a dialog of wide buttons |
+| `toolbox-step.png` | ContactsMate (choose the card to keep, compare before merging); GNOME and Thunderbird edit in the pane | approved: in the main area instead of a dialog over a dimmed window; "‹ Toolbox" to go back; Delete in red; pictures on lines |
+| `wizard-start.png` | the reference app's wizard step chooser | approved: in the main area; empty progress strip; Cancel and Start at the right |
+| `wizard-step.png` | reference app's step-by-step wizard | approved: in the main area; progress strip; one value per line, the one the contacts share; Delete Contacts in red |
 | `wizard-preview.png` | reference app's final screen before overwriting | new (queued request), after the last step and before the summary: All · Changed · Deleted, one mark per row, the contact after the run with the details pane's picture-and-name header |
 | `wizard-summary.png` | reference app's statistics screen | before, after, modified as three figures; a table per step: Found, Deleted, Merged, Repaired, Added |
-| `editor.png` | Thunderbird's edit form (picture beside the name, a group per kind with its own Add); GNOME's Cancel/Done in the pane header | proposal: in the details pane instead of a dialog; names in two columns; new groups: Instant Messaging, Organizations (several, each with its address), Relatives; Delete Contact at the end |
+| `editor.png` | Thunderbird's edit form (picture beside the name, a group per kind with its own Add); GNOME's Cancel/Done in the pane header | approved: in the details pane instead of a dialog; names in two columns; new groups: Instant Messaging, Organizations (several, each with its address), Relatives; Delete Contact at the end |
 
 The wizard pictures share one worked example (5 before, 3 after, 3 modified), set out in `layout.md`.
 

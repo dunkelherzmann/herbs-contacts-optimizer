@@ -289,14 +289,15 @@ address books have no file and no server, so Save offers to export them.
 
 ### 6.1 Toolbox and editor
 
-Toolbox (toolbar, or Main Menu → Tools → Toolbox) lists every step on its own, with a line saying what it
-does. A step opens as a tick list of what it would change, with the count selected, Select All and Deselect
+Toolbox (toolbar, or Main Menu → Tools → Toolbox) opens in the main area beside the sidebar, not as a dialog,
+and lists every step on its own in three groups, with a line saying what it does. A step opens in the same
+place, with "‹ Toolbox" to go back, as a tick list of what it would change, with the count selected, Select All and Deselect
 All. Repairs and exact duplicates come ticked; anything else that deletes or merges comes unticked, and a
 button that deletes is red. Nothing changes until the step's button is pressed, and the file changes only on
 Save.
 
-The editor (Edit in the contact's panel, Main Menu → Edit → Edit Contact, or New Contact, ⌘N) is a form over a
-copy of the contact: name parts, phones, e-mails, addresses, organization, websites, birthday, anniversary,
+The editor (Edit in the contact's panel, Main Menu → Edit → Edit Contact, or New Contact, ⌘N) opens in the
+contact's panel, not as a dialog, and is a form over a copy of the contact: name parts, phones, e-mails, addresses, organization, websites, birthday, anniversary,
 groups and note, and the picture: Add or Change Picture takes a JPEG, PNG or GIF file and keeps it byte for
 byte; Remove Picture takes it off. The contact's panel shows the picture above the name. Pictures are read
 from and written to vCard files of every version; a picture that is only a web address stays as it is.
@@ -344,7 +345,8 @@ while a number has none. Country data comes from libphonenumber and Unicode CLDR
 
 ### 6.2 Optimization wizard
 
-Wizard (toolbar, or Main Menu → Tools → Optimization Wizard) first lists its steps, all ticked: Duplicates,
+Wizard (toolbar, or Main Menu → Tools → Optimization Wizard) opens in the main area beside the sidebar, not as
+a dialog, with a strip showing the steps' progress. It first lists its steps, all ticked: Duplicates,
 Inner Duplicates, Similar Contacts, Merge Contacts, Invalid Contacts, Missing Information, Fill In Empty
 Names, Tidy Names, Capitalization, Country Codes, Simplify Numbers, with Select All and Deselect All. Start runs the ticked ones in that order. Each is the same tick list
 as in the Toolbox, with "Step N of M" above it, its own button to carry it out, and Skip. A step that finds
