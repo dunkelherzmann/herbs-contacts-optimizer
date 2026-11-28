@@ -2,7 +2,7 @@
 //! list; nothing happens until its button is pressed.
 
 use crate::editor::Editor;
-use crate::ui::{count, list, modal, AppState, Dialog};
+use crate::ui::{count, list, pane, AppState, Dialog};
 use egui::{Align, Button, Color32, Label, Layout, RichText, TextEdit};
 use hco_core::countries::{self, COUNTRIES};
 use hco_core::optimize::{self, DataType};
@@ -426,9 +426,14 @@ impl Step {
         let Some(book) = state.books.get_mut(state.current) else { return Dialog::None };
         let in_wizard = self.wizard.is_some();
         let (mut apply, mut close, mut back, mut skip, mut edit, mut delete) = (false, false, false, false, None, None);
-        let closed = modal(ui, "step", 700.0, |ui| {
+        let closed = pane(ui, "step", |ui| {
             if let Some(wizard) = &self.wizard {
+                progress(ui, Some(wizard.at), wizard.kinds.len());
+                ui.add_space(8.0);
                 ui.label(RichText::new(format!("STEP {} OF {}", wizard.at + 1, wizard.kinds.len())).small().weak());
+            } else {
+                back = ui.add(Button::new("‹ Toolbox")).on_hover_text("Back to the list of tools").clicked();
+                ui.add_space(4.0);
             }
             ui.label(RichText::new(self.kind.title()).size(17.0).strong());
             ui.label(RichText::new(self.kind.description()).weak());
@@ -618,7 +623,9 @@ impl Step {
                     self.at = (at as i64 + go).clamp(0, total as i64 - 1) as usize;
                 }
             } else {
-                let room = ui.ctx().content_rect().height() - 330.0 - if self.preview_set(&book.contacts).is_some() { PREVIEW_HEIGHT + 30.0 } else { 0.0 };
+                // The list takes the room the main area has left above the preview and the buttons.
+                // The list as tall as its lines, up to the room left above the preview and the footer.
+                let room = ui.available_height() - FOOTER - if self.preview_set(&book.contacts).is_some() { PREVIEW_HEIGHT + 40.0 } else { 0.0 };
                 let height = (len.max(2) as f32 * 32.0).min(room.max(120.0));
                 let mut previewed = self.preview;
                 list(ui, height, |ui| {
@@ -654,14 +661,13 @@ impl Step {
             if let Some(set) = self.preview_set(&book.contacts) {
                 merged_preview(ui, &book.contacts, &set);
             }
+            footer_gap(ui);
             ui.separator();
             ui.add_space(6.0);
             ui.horizontal(|ui| {
                 let size = egui::vec2(80.0, 26.0);
                 if in_wizard {
                     back = ui.add(Button::new("Cancel Wizard").min_size(size)).on_hover_text("Stop here and undo everything the wizard changed").clicked();
-                } else {
-                    back = ui.add(Button::new("Toolbox").min_size(size)).on_hover_text("Back to the list of tools").clicked();
                 }
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     if ticks {
@@ -881,7 +887,9 @@ impl Wizard {
     pub fn summary(self, ui: &mut egui::Ui, state: &mut AppState) -> Dialog {
         let Some(book) = state.books.get_mut(state.current) else { return Dialog::None };
         let (mut done, mut undo) = (false, false);
-        let closed = modal(ui, "summary", 520.0, |ui| {
+        let closed = pane(ui, "summary", |ui| {
+            progress(ui, Some(self.kinds.len()), self.kinds.len());
+            ui.add_space(8.0);
             ui.label(RichText::new("Summary").size(17.0).strong());
             ui.label(RichText::new(format!("{} before, {} now. The file changes only when you save.", count(self.before.len(), "contact"), book.contacts.len())).weak());
             ui.add_space(8.0);
@@ -895,7 +903,9 @@ impl Wizard {
                     });
                 }
             });
-            ui.add_space(12.0);
+            footer_gap(ui);
+            ui.separator();
+            ui.add_space(6.0);
             ui.horizontal(|ui| {
                 let size = egui::vec2(80.0, 26.0);
                 undo = ui.add(Button::new("Undo All").min_size(size)).on_hover_text("Put every contact back as it was before the wizard").clicked();
@@ -922,7 +932,9 @@ impl Wizard {
 /// The wizard's first page: which steps to run. Returns the dialog to show next.
 pub fn choose_steps(mut steps: Vec<(Kind, bool)>, ui: &mut egui::Ui, state: &mut AppState) -> Dialog {
     let (mut start, mut cancel) = (false, false);
-    let closed = modal(ui, "wizard", 520.0, |ui| {
+    let closed = pane(ui, "wizard", |ui| {
+        progress(ui, None, steps.iter().filter(|(_, ticked)| *ticked).count());
+        ui.add_space(8.0);
         ui.label(RichText::new("Optimization Wizard").size(17.0).strong());
         ui.label(RichText::new("The wizard goes through the steps you tick, one after another. Each step shows what it would change, and you can undo the whole run at the end.").weak());
         ui.add_space(8.0);
@@ -941,13 +953,17 @@ pub fn choose_steps(mut steps: Vec<(Kind, bool)>, ui: &mut egui::Ui, state: &mut
         ui.separator();
         for (kind, ticked) in &mut steps {
             ui.horizontal(|ui| {
-                ui.checkbox(ticked, kind.title());
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.add(Label::new(RichText::new(kind.short()).weak()).truncate());
+                // The name in a column of its own, its line beside it.
+                ui.allocate_ui_with_layout(egui::vec2(220.0, 24.0), Layout::left_to_right(Align::Center), |ui| {
+                    ui.set_width(220.0);
+                    ui.checkbox(ticked, kind.title());
                 });
+                ui.add(Label::new(RichText::new(kind.short()).weak()).truncate());
             });
         }
-        ui.add_space(12.0);
+        footer_gap(ui);
+        ui.separator();
+        ui.add_space(6.0);
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             let size = egui::vec2(80.0, 26.0);
             let any = steps.iter().any(|(_, ticked)| *ticked);
@@ -969,29 +985,95 @@ pub fn choose_steps(mut steps: Vec<(Kind, bool)>, ui: &mut egui::Ui, state: &mut
     }
 }
 
+/// One tool in the Toolbox: its name, a line about it and "›"; the whole row opens it.
+fn tool_row(ui: &mut egui::Ui, kind: Kind, band: bool) -> egui::Response {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 28.0), egui::Sense::click());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, kind.title()));
+    let visuals = ui.visuals();
+    if response.hovered() {
+        ui.painter().rect_filled(rect, 6.0, visuals.widgets.hovered.weak_bg_fill);
+    } else if band {
+        ui.painter().rect_filled(rect, 6.0, visuals.faint_bg_color);
+    }
+    let (text, weak) = (visuals.text_color(), visuals.weak_text_color());
+    let body = egui::TextStyle::Body.resolve(ui.style());
+    let y = rect.center().y;
+    // The name in a column of its own, its line beside it, "›" at the right end.
+    ui.painter().text(egui::pos2(rect.left() + 10.0, y), egui::Align2::LEFT_CENTER, kind.title(), body.clone(), text);
+    let line = ui.painter().layout_no_wrap(kind.short().to_string(), body.clone(), weak);
+    let room = rect.right() - 36.0 - (rect.left() + 210.0);
+    if line.size().x <= room {
+        ui.painter().galley(egui::pos2(rect.left() + 210.0, y - line.size().y / 2.0), line, weak);
+    }
+    ui.painter().text(egui::pos2(rect.right() - 12.0, y), egui::Align2::RIGHT_CENTER, "›", body, weak);
+    response.on_hover_text(kind.short())
+}
+
+/// The height of a work view's footer: a separator and a row of buttons.
+const FOOTER: f32 = 52.0;
+
+/// Pushes what follows to the bottom of the view, so its footer sits in the same place in every view.
+fn footer_gap(ui: &mut egui::Ui) {
+    let rest = ui.available_height() - FOOTER;
+    if rest > 0.0 {
+        ui.add_space(rest);
+    }
+}
+
+/// The wizard's strip of steps: those done filled, the current one half, the rest empty.
+/// `at` is None before the run starts.
+fn progress(ui: &mut egui::Ui, at: Option<usize>, total: usize) {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 6.0), egui::Sense::hover());
+    let label = match at {
+        None => "Progress: not started".to_string(),
+        Some(at) if at >= total => "Progress: every step done".to_string(),
+        Some(at) => format!("Progress: step {} of {total}", at + 1),
+    };
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ProgressIndicator, true, &label));
+    if total == 0 {
+        return;
+    }
+    let gap = 4.0;
+    let width = (rect.width() - gap * (total - 1) as f32) / total as f32;
+    let accent = ui.visuals().selection.bg_fill;
+    let empty = ui.visuals().widgets.inactive.weak_bg_fill;
+    for i in 0..total {
+        let segment = egui::Rect::from_min_size(rect.min + egui::vec2(i as f32 * (width + gap), 0.0), egui::vec2(width, rect.height()));
+        let fill = match at {
+            Some(at) if i < at => accent,
+            Some(at) if i == at => accent.gamma_multiply(0.45),
+            _ => empty,
+        };
+        ui.painter().rect_filled(segment, 3.0, fill);
+    }
+}
+
 /// The list of tools; returns the dialog to show next.
 pub fn menu(ui: &mut egui::Ui, state: &mut AppState) -> Dialog {
     let mut picked = None;
     let mut close = false;
-    let closed = modal(ui, "toolbox", 520.0, |ui| {
+    let closed = pane(ui, "toolbox", |ui| {
         ui.label(RichText::new("Toolbox").size(17.0).strong());
         ui.label(RichText::new("Each tool shows what it would change before anything happens.").weak());
-        // A fixed height: a list that sizes itself to its content makes the dialog jump while it settles.
-        let height = (ui.ctx().content_rect().height() - 200.0).clamp(160.0, 560.0);
-        list(ui, height, |ui| {
+        ui.add_space(4.0);
+        // The tools fill the main area above the footer; the list scrolls when the window is short.
+        list(ui, (ui.available_height() - FOOTER).max(160.0), |ui| {
+            // Rows touch, as in a list, so every tool fits in an ordinary window.
+            ui.spacing_mut().item_spacing.y = 0.0;
             for (title, kinds) in GROUPS {
-                crate::ui::section(ui, title);
-                for &kind in kinds {
-                    ui.horizontal(|ui| {
-                        if ui.add(Button::new(kind.title()).min_size(egui::vec2(170.0, 26.0))).on_hover_text(kind.short()).clicked() {
-                            picked = Some(kind);
-                        }
-                        ui.add(Label::new(RichText::new(kind.short()).weak()).truncate());
-                    });
+                ui.add_space(10.0);
+                ui.label(RichText::new(title).small().strong().color(ui.visuals().weak_text_color()));
+                ui.add_space(2.0);
+                for (n, &kind) in kinds.iter().enumerate() {
+                    if tool_row(ui, kind, n % 2 == 1).clicked() {
+                        picked = Some(kind);
+                    }
                 }
             }
         });
-        ui.add_space(10.0);
+        footer_gap(ui);
+        ui.separator();
+        ui.add_space(6.0);
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             close = ui.add(Button::new("Close").min_size(egui::vec2(80.0, 26.0))).on_hover_text("Close the Toolbox (Esc)").clicked();
         });

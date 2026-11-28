@@ -431,6 +431,17 @@ impl AppState {
         };
     }
 
+    /// Whether a work view is open: the Toolbox, a step, the wizard or the editor. These open in the
+    /// window itself, and the toolbar, the address books and the list rest meanwhile.
+    pub fn working(&self) -> bool {
+        self.in_main_area() || matches!(self.dialog, Dialog::Editor(_))
+    }
+
+    /// Whether a work view takes the place of the list.
+    fn in_main_area(&self) -> bool {
+        matches!(self.dialog, Dialog::Toolbox | Dialog::Step(_) | Dialog::ChooseSteps(_) | Dialog::Summary(_))
+    }
+
     pub fn open_toolbox(&mut self) {
         if !self.books.is_empty() {
             self.dialog = Dialog::Toolbox;
@@ -602,7 +613,11 @@ impl AppState {
         }
         let mut command = None;
         // ⇧⌘F comes before ⌘F: a shortcut without Shift also takes the key with Shift.
+        let working = self.working();
         ui.input_mut(|input| {
+            if working {
+                return;
+            }
             for (shortcut, c) in [(EXPORT, Command::Export(Format::VCard3)), (OPEN, Command::Open), (SAVE, Command::Save), (FILTER, Command::ToggleFilters), (FIND, Command::Find), (DUPLICATES, Command::FindDuplicates), (NEW, Command::NewContact)] {
                 if input.consume_shortcut(&shortcut) {
                     command = Some(c);
@@ -636,8 +651,17 @@ impl AppState {
             .default_size(210.0)
             .min_size(150.0)
             .frame(frame(palette.sidebar).inner_margin(egui::Margin::same(12)))
-            .show(ui, |ui| self.sidebar(ui, &mut command));
-        if self.selected_contact().is_some() {
+            .show(ui, |ui| {
+                ui.add_enabled_ui(!working, |ui| self.sidebar(ui, &mut command));
+            });
+        // The editor opens in the contact's panel, wider than the panel that shows the contact.
+        if matches!(self.dialog, Dialog::Editor(_)) {
+            egui::Panel::right("editor")
+                .default_size(440.0)
+                .min_size(360.0)
+                .frame(frame(palette.content).inner_margin(egui::Margin::same(16)))
+                .show(ui, |ui| self.editor_view(ui));
+        } else if self.selected_contact().is_some() {
             egui::Panel::right("details")
                 .default_size(330.0)
                 .min_size(240.0)
@@ -645,13 +669,17 @@ impl AppState {
                 .show(ui, |ui| self.details(ui, &mut command));
         }
         egui::CentralPanel::default().frame(frame(palette.content).inner_margin(egui::Margin::symmetric(12, 6))).show(ui, |ui| {
-            if self.books.is_empty() {
+            if self.in_main_area() {
+                self.work_view(ui);
+            } else if self.books.is_empty() {
                 self.welcome(ui, &mut command);
             } else {
-                if self.show_filters {
-                    self.filter_bar(ui);
-                }
-                self.contact_list(ui);
+                ui.add_enabled_ui(!self.working(), |ui| {
+                    if self.show_filters {
+                        self.filter_bar(ui);
+                    }
+                    self.contact_list(ui);
+                });
             }
         });
 
@@ -664,11 +692,12 @@ impl AppState {
     fn toolbar(&mut self, ui: &mut egui::Ui, command: &mut Option<Command>) {
         let has_book = !self.books.is_empty();
         let key = |ui: &egui::Ui, shortcut: &KeyboardShortcut| ui.ctx().format_shortcut(shortcut);
+        let has_book = has_book && !self.working();
         ui.horizontal(|ui| {
             self.main_menu(ui, command);
             ui.add_space(6.0);
 
-            if ui.add(Button::new("Open")).on_hover_text(format!("Open a contacts file ({})", key(ui, &OPEN))).clicked() {
+            if ui.add_enabled(!self.working(), Button::new("Open")).on_hover_text(format!("Open a contacts file ({})", key(ui, &OPEN))).clicked() {
                 *command = Some(Command::Open);
             }
             let save = ui.add_enabled(has_book, Button::new("Save"));
@@ -713,10 +742,15 @@ impl AppState {
     /// The Main Menu: every command of the app, behind one button.
     fn main_menu(&mut self, ui: &mut egui::Ui, command: &mut Option<Command>) {
         let has_book = !self.books.is_empty();
+        // While a work view is open, only View and Help work: the rest would change what it shows.
+        let free = !self.working();
         let key = |ui: &egui::Ui, shortcut: &KeyboardShortcut| ui.ctx().format_shortcut(shortcut);
         let (menu, _) = egui::containers::menu::MenuButton::from_button(Button::new("     ")).ui(ui, |ui| {
             ui.set_min_width(230.0);
             ui.menu_button("File", |ui| {
+                if !free {
+                    ui.disable();
+                }
                 item(ui, command, Command::Open, true, "Open…", &key(ui, &OPEN), "Open a contacts file as an address book");
                 item(ui, command, Command::Save, has_book, "Save", &key(ui, &SAVE), "Save the changes as a copy beside the file, “… - optimized”, leaving the file itself as it was");
                 item(ui, command, Command::Restore, has_book, "Restore Backup…", "", "Bring back the file as it was before the last save, after asking");
@@ -732,6 +766,9 @@ impl AppState {
                 item(ui, command, Command::CloseBook, has_book, "Close Address Book", "", "Take the selected address books off the list; their files stay as they are");
             });
             ui.menu_button("Edit", |ui| {
+                if !free {
+                    ui.disable();
+                }
                 let selected = self.selected.is_some();
                 item(ui, command, Command::NewContact, has_book, "New Contact", &key(ui, &NEW), "Add a contact to this address book");
                 item(ui, command, Command::EditContact, selected, "Edit Contact", "", "Change the selected contact");
@@ -768,11 +805,17 @@ impl AppState {
                 });
             });
             ui.menu_button("Tools", |ui| {
+                if !free {
+                    ui.disable();
+                }
                 item(ui, command, Command::FindDuplicates, has_book, "Find Duplicates", &key(ui, &DUPLICATES), "Look for identical contacts in this address book");
                 item(ui, command, Command::Wizard, has_book, "Optimization Wizard…", "", "Go through the clean-up steps one after another");
                 item(ui, command, Command::Toolbox, has_book, "Toolbox…", "", "Every clean-up tool on its own");
             });
             ui.menu_button("Accounts", |ui| {
+                if !free {
+                    ui.disable();
+                }
                 let in_account = self.current_account().is_some();
                 item(ui, command, Command::AddAccount, true, "Add Account…", "", "Connect iCloud or another contacts server");
                 item(ui, command, Command::AddLocalAccounts, crate::osaccounts::available(), "Add This Computer's Accounts…", "", "Read the contacts from the accounts set up on this computer");
@@ -1159,15 +1202,32 @@ impl AppState {
         });
     }
 
+    /// The Toolbox, a step or the wizard, in the place of the list.
+    fn work_view(&mut self, ui: &mut egui::Ui) {
+        self.dialog = match std::mem::replace(&mut self.dialog, Dialog::None) {
+            Dialog::Toolbox => toolbox::menu(ui, self),
+            Dialog::Step(step) => step.show(ui, self),
+            Dialog::ChooseSteps(steps) => toolbox::choose_steps(steps, ui, self),
+            Dialog::Summary(wizard) => wizard.summary(ui, self),
+            other => other,
+        };
+    }
+
+    /// The editor, in the contact's panel.
+    fn editor_view(&mut self, ui: &mut egui::Ui) {
+        self.dialog = match std::mem::replace(&mut self.dialog, Dialog::None) {
+            Dialog::Editor(editor) => editor.show(ui, self),
+            other => other,
+        };
+    }
+
     fn dialogs(&mut self, ui: &mut egui::Ui) {
         let dialog = std::mem::replace(&mut self.dialog, Dialog::None);
         self.dialog = match dialog {
             Dialog::None => Dialog::None,
             Dialog::About => self.about(ui),
-            Dialog::Toolbox => toolbox::menu(ui, self),
-            Dialog::Step(step) => step.show(ui, self),
-            Dialog::ChooseSteps(steps) => toolbox::choose_steps(steps, ui, self),
-            Dialog::Summary(wizard) => wizard.summary(ui, self),
+            // The work views are drawn in the window, by `work_view` and `editor_view`.
+            view @ (Dialog::Toolbox | Dialog::Step(_) | Dialog::ChooseSteps(_) | Dialog::Summary(_) | Dialog::Editor(_)) => view,
             Dialog::ConfirmRestore(backup) => self.confirm_restore(ui, backup),
             Dialog::ConfirmQuit => self.confirm_quit(ui),
             Dialog::ConfirmDeleteTicked => self.confirm_delete_ticked(ui),
@@ -1177,7 +1237,6 @@ impl AppState {
             Dialog::Busy(label) => self.busy(ui, label),
             Dialog::ConfirmSend(changes) => self.confirm_send(ui, changes),
             Dialog::ConfirmRemoveAccount(name) => self.confirm_remove_account(ui, name),
-            Dialog::Editor(editor) => editor.show(ui, self),
             Dialog::ConfirmDelete(index, back) => self.confirm_delete(ui, index, back),
             Dialog::Duplicates(groups) => self.duplicates(ui, groups),
             Dialog::Message { title, text } => {
@@ -1399,6 +1458,21 @@ pub(crate) fn modal(ui: &mut egui::Ui, id: &'static str, width: f32, add: impl F
             add(ui);
         })
         .should_close()
+}
+
+/// A work view drawn in the window itself (the main area or the contact's panel). Returns whether
+/// Esc was pressed, which leaves it as Esc left the dialogs.
+pub(crate) fn pane(ui: &mut egui::Ui, id: &'static str, add: impl FnOnce(&mut egui::Ui)) -> bool {
+    ui.push_id(id, |ui| {
+        // Text fields are as light as the pane behind them, so they get a thin outline here; on the
+        // buttons the same line is the colour of their own fill and does not show.
+        let line = theme::of(ui).separator;
+        let widgets = &mut ui.visuals_mut().widgets;
+        widgets.inactive.bg_stroke = egui::Stroke::new(1.0, line);
+        widgets.hovered.bg_stroke = egui::Stroke::new(1.0, line);
+        add(ui);
+    });
+    ui.input(|input| input.key_pressed(Key::Escape))
 }
 
 /// A scrolling list of exactly this height. Dialogs size themselves to their content, so a list

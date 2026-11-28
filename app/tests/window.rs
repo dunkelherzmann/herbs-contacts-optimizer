@@ -1359,3 +1359,91 @@ fn both_merge_steps_preview_the_merged_contact() {
     harness.get_by_label("+ ana@example.org");
     assert!(harness.query_by_label("+ Works at Acme").is_none());
 }
+
+/// The Toolbox, its steps, the wizard and the editor open in the window itself, beside the address
+/// books, not as dialogs over a dimmed window (Herbert's yes of 2026-11-28; `design/toolbox.png`,
+/// `toolbox-step.png`, `wizard-start.png`, `wizard-step.png`, `editor.png`).
+#[test]
+fn work_views_open_in_the_window_beside_the_address_books() {
+    use herbs_contacts_optimizer::toolbox::Kind;
+    let disabled = |harness: &Harness<'_, Option<AppState>>, label: &str| harness.get_by_role_and_label(egui::Role::Button, label).accesskit_node().is_disabled();
+
+    // The Toolbox takes the place of the list; the address books stay, the toolbar rests.
+    let mut harness = window(egui::Theme::Light, |state| {
+        state.add_book(messy());
+        state.open_toolbox();
+    });
+    harness.run();
+    assert!(harness.query_by_label("Tick all").is_none(), "the list should make way for the Toolbox");
+    harness.get_by_label("Messy.vcf");
+    assert!(disabled(&harness, "Open") && disabled(&harness, "Wizard"), "the toolbar should rest while a tool is open");
+    assert!(!disabled(&harness, "Main Menu"), "the Main Menu stays");
+
+    // A step opens in the same place, and "‹ Toolbox" goes back to the list of tools.
+    harness.get_by_label(Kind::Capitalization.title()).click();
+    harness.run();
+    harness.get_by_label("2 of 2 selected");
+    assert!(harness.query_by_label("Tick all").is_none(), "the step should be in the main area");
+    harness.get_by_label("‹ Toolbox").click();
+    harness.run();
+    harness.get_by_label(Kind::SimplifyNumbers.title());
+
+    // Esc leaves the Toolbox; the list is back and the toolbar works again.
+    harness.key_press(egui::Key::Escape);
+    harness.run();
+    harness.get_by_label("Tick all");
+    assert!(!disabled(&harness, "Open"));
+
+    // The wizard: its list of steps, then each step with its progress, in the main area.
+    harness.state_mut().as_mut().unwrap().open_wizard();
+    harness.run();
+    assert!(harness.query_by_label("Tick all").is_none(), "the wizard should be in the main area");
+    harness.get_by_label("Start").click();
+    harness.run();
+    // No exact duplicates in this book, so the run begins at the second step.
+    harness.get_by_label("Progress: step 2 of 11");
+    assert!(harness.query_by_label("Tick all").is_none());
+    harness.get_by_label("Cancel Wizard").click();
+    harness.run();
+    harness.get_by_label("Tick all");
+
+    // The editor opens in the contact's panel at the right, beside the list.
+    harness.state_mut().as_mut().unwrap().selected = Some(1);
+    harness.state_mut().as_mut().unwrap().edit_contact(false);
+    harness.run();
+    harness.get_by_label("Tick all");
+    let heading = harness.get_by_role_and_label(egui::Role::Label, "Edit Contact").rect();
+    assert!(heading.left() > 450.0, "the editor should be in the panel at the right, not centred: {heading:?}");
+    harness.get_by_label("Cancel").click();
+    harness.run();
+    assert!(harness.query_by_role_and_label(egui::Role::Label, "Edit Contact").is_none());
+}
+
+/// Pictures of the work views in the dark appearance, beside their light pictures.
+#[test]
+fn work_views_in_the_dark() {
+    use herbs_contacts_optimizer::toolbox::Kind;
+    let mut harness = window(egui::Theme::Dark, |state| {
+        state.add_book(messy());
+        state.open_toolbox();
+    });
+    harness.run();
+    picture(&mut harness, "toolbox-dark.png");
+    harness.get_by_label(Kind::Capitalization.title()).click();
+    harness.run();
+    picture(&mut harness, "step-capitalization-dark.png");
+    harness.key_press(egui::Key::Escape);
+    harness.run();
+    harness.state_mut().as_mut().unwrap().open_wizard();
+    harness.run();
+    picture(&mut harness, "wizard-dark.png");
+    harness.get_by_label("Start").click();
+    harness.run();
+    picture(&mut harness, "wizard-step-dark.png");
+    harness.get_by_label("Cancel Wizard").click();
+    harness.run();
+    harness.state_mut().as_mut().unwrap().selected = Some(1);
+    harness.state_mut().as_mut().unwrap().edit_contact(false);
+    harness.run();
+    picture(&mut harness, "editor-dark.png");
+}
