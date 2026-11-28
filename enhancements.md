@@ -175,7 +175,7 @@ Requests in the order received. `- [x]` once shipped, with the version.
   - [ ] Mac
   - [ ] Linux
   - [ ] Windows
-- [ ] 2026-11-28 (Mac, Linux, Windows): **Toolbox, wizard and editor in the main area.** His yes to the Drafter's proposal: the Toolbox, its steps and the wizard open in the main area beside the sidebar, and the editor in the contact's panel, instead of dialogs over a dimmed window; laid out as in `design/toolbox.png`, `toolbox-step.png`, `wizard-start.png`, `wizard-step.png` and `editor.png` (spec 6.1, 6.2).
-  - [ ] Mac
-  - [ ] Linux
-  - [ ] Windows
+- [x] 2026-11-28 (Mac, Linux, Windows): **Toolbox, wizard and editor in the main area.** His yes to the Drafter's proposal: the Toolbox, its steps and the wizard open in the main area beside the sidebar, and the editor in the contact's panel, instead of dialogs over a dimmed window; laid out as in `design/toolbox.png`, `toolbox-step.png`, `wizard-start.png`, `wizard-step.png` and `editor.png` (spec 6.1, 6.2). Done in 0.2.50, #28; the small gaps to the mockups are in bugs.md.
+  - [x] Mac (window tests pass; installed in /Applications)
+  - [x] Linux (tests pass; Flatpak installed, self-check passed)
+  - [x] Windows (tests pass; `.exe` on the Desktop, self-check passed)
